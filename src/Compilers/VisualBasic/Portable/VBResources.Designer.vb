@@ -22,7 +22,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     '''<summary>
     '''  A strongly-typed resource class, for looking up localized strings, etc.
     '''</summary>
-    <Global.System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0"),  _
+    <Global.System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0"),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
      Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute(),  _
      Global.Microsoft.VisualBasic.HideModuleNameAttribute()>  _
@@ -2377,6 +2377,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Please use language version {0} or greater to use comments after line continuation character..
+        '''</summary>
+        Friend ReadOnly Property ERR_CommentsAfterLineContinuationNotAvailable1() As String
+            Get
+                Return ResourceManager.GetString("ERR_CommentsAfterLineContinuationNotAvailable1", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to Conditional compilation constant &apos;{1}&apos; is not valid: {0}.
         '''</summary>
         Friend ReadOnly Property ERR_ConditionalCompilationConstantNotValid() As String
@@ -2431,7 +2440,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Length of String constant exceeds current memory limit.  Try splitting the string into multiple constants..
+        '''  Looks up a localized string similar to Length of String constant resulting from concatenation exceeds System.Int32.MaxValue.  Try splitting the string into multiple constants..
         '''</summary>
         Friend ReadOnly Property ERR_ConstantStringTooLong() As String
             Get
@@ -2788,6 +2797,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_DefaultEventNotFound1() As String
             Get
                 Return ResourceManager.GetString("ERR_DefaultEventNotFound1", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Type &apos;{0}&apos; cannot be embedded because it has a non-abstract member. Consider setting the &apos;Embed Interop Types&apos; property to false..
+        '''</summary>
+        Friend ReadOnly Property ERR_DefaultInterfaceImplementationInNoPIAType() As String
+            Get
+                Return ResourceManager.GetString("ERR_DefaultInterfaceImplementationInNoPIAType", resourceCulture)
             End Get
         End Property
         
@@ -6810,7 +6828,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to Line continuation character &apos;_&apos; must be preceded by at least one white space and must be the last character on the line..
+        '''  Looks up a localized string similar to The line continuation character &apos;_&apos; must be preceded by at least one white space and it must be followed by a comment or the &apos;_&apos; must be the last character on the line..
         '''</summary>
         Friend ReadOnly Property ERR_LineContWithCommentOrNoPrecSpace() As String
             Get
@@ -7418,6 +7436,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_MultilineLambdasCannotContainOnError() As String
             Get
                 Return ResourceManager.GetString("ERR_MultilineLambdasCannotContainOnError", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Multiple analyzer config files cannot be in the same directory (&apos;{0}&apos;)..
+        '''</summary>
+        Friend ReadOnly Property ERR_MultipleAnalyzerConfigsInSameDir() As String
+            Get
+                Return ResourceManager.GetString("ERR_MultipleAnalyzerConfigsInSameDir", resourceCulture)
             End Get
         End Property
         
@@ -9567,6 +9594,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Type &apos;{0}&apos; cannot be embedded because it has a re-abstraction of a member from base interface. Consider setting the &apos;Embed Interop Types&apos; property to false..
+        '''</summary>
+        Friend ReadOnly Property ERR_ReAbstractionInNoPIAType() As String
+            Get
+                Return ResourceManager.GetString("ERR_ReAbstractionInNoPIAType", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to &apos;ReadOnly&apos; variable cannot be the target of an assignment..
         '''</summary>
         Friend ReadOnly Property ERR_ReadOnlyAssignment() As String
@@ -9906,6 +9942,24 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_ReturnWithoutValue() As String
             Get
                 Return ResourceManager.GetString("ERR_ReturnWithoutValue", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Target runtime doesn&apos;t support default interface implementation..
+        '''</summary>
+        Friend ReadOnly Property ERR_RuntimeDoesNotSupportDefaultInterfaceImplementation() As String
+            Get
+                Return ResourceManager.GetString("ERR_RuntimeDoesNotSupportDefaultInterfaceImplementation", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Target runtime doesn&apos;t support &apos;Protected&apos;, &apos;Protected Friend&apos;, or &apos;Private Protected&apos; accessibility for a member of an interface..
+        '''</summary>
+        Friend ReadOnly Property ERR_RuntimeDoesNotSupportProtectedAccessForInterfaceMember() As String
+            Get
+                Return ResourceManager.GetString("ERR_RuntimeDoesNotSupportProtectedAccessForInterfaceMember", resourceCulture)
             End Get
         End Property
         
@@ -12041,6 +12095,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property FEATURE_CollectionInitializers() As String
             Get
                 Return ResourceManager.GetString("FEATURE_CollectionInitializers", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to comments after line continuation.
+        '''</summary>
+        Friend ReadOnly Property FEATURE_CommentsAfterLineContinuation() As String
+            Get
+                Return ResourceManager.GetString("FEATURE_CommentsAfterLineContinuation", resourceCulture)
             End Get
         End Property
         

@@ -104,7 +104,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Classification
                 SyntaxKind.UntilKeyword,
                 SyntaxKind.EndIfKeyword,
                 SyntaxKind.GosubKeyword,
-                SyntaxKind.YieldKeyword
+                SyntaxKind.YieldKeyword,
+                SyntaxKind.ToKeyword
                     Return True
                 Case Else
                     Return False
@@ -131,7 +132,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Classification
                 SyntaxKind.EndIfStatement,
                 SyntaxKind.EndSelectStatement,
                 SyntaxKind.EndTryStatement,
-                SyntaxKind.EndUsingStatement,
                 SyntaxKind.EndWhileStatement,
                 SyntaxKind.ExitDoStatement,
                 SyntaxKind.ExitForStatement,
@@ -158,7 +158,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Classification
                 SyntaxKind.UntilClause,
                 SyntaxKind.WhileClause,
                 SyntaxKind.WhileStatement,
-                SyntaxKind.YieldStatement
+                SyntaxKind.YieldStatement,
+                SyntaxKind.TernaryConditionalExpression
                     Return True
                 Case Else
                     Return False
@@ -211,6 +212,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Classification
                 Return ClassificationTypeNames.EnumMemberName
             ElseIf TypeOf parent Is LabelStatementSyntax AndAlso DirectCast(parent, LabelStatementSyntax).LabelToken = identifier Then
                 Return ClassificationTypeNames.LabelName
+            ElseIf TypeOf parent?.Parent Is CatchStatementSyntax AndAlso DirectCast(parent.Parent, CatchStatementSyntax).IdentifierName.Identifier = identifier Then
+                Return ClassificationTypeNames.LocalName
             ElseIf TryClassifyModifiedIdentifer(parent, identifier, classification) Then
                 Return classification
             ElseIf (identifier.ToString() = "IsTrue" OrElse identifier.ToString() = "IsFalse") AndAlso

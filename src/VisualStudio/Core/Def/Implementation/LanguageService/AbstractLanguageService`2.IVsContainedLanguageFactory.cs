@@ -28,7 +28,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
                 if (webApplicationCtxSvc.GetItemContext(hierarchy, itemid, out var webServiceProvider) >= 0)
                 {
                     var webFileCtxServiceGuid = typeof(IWebFileCtxService).GUID;
-                    IntPtr service = IntPtr.Zero;
+                    var service = IntPtr.Zero;
                     if (webServiceProvider.QueryService(ref webFileCtxServiceGuid, ref webFileCtxServiceGuid, out service) >= 0)
                     {
                         try
@@ -47,7 +47,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
                 }
             }
 
-            if (projectName == null)
+            if (string.IsNullOrEmpty(projectName))
             {
                 if (hierarchy is IVsContainedLanguageProjectNameProvider containedLanguageProjectNameProvider)
                 {

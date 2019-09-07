@@ -3,1046 +3,658 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslyn.Utilities;
 using Xunit;
+using InternalSyntaxFactory = Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory;
 
 namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 {
+    
     public partial class GreenNodeTests
     {
         #region Green Generators
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IdentifierNameSyntax GenerateIdentifierName()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IdentifierName(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QualifiedNameSyntax GenerateQualifiedName()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.QualifiedName(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.GenericNameSyntax GenerateGenericName()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.GenericName(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), GenerateTypeArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeArgumentListSyntax GenerateTypeArgumentList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeArgumentList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LessThanToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AliasQualifiedNameSyntax GenerateAliasQualifiedName()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AliasQualifiedName(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonColonToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PredefinedTypeSyntax GeneratePredefinedType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PredefinedType(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.BoolKeyword));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArrayTypeSyntax GenerateArrayType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ArrayType(GenerateIdentifierName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArrayRankSpecifierSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArrayRankSpecifierSyntax GenerateArrayRankSpecifier()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ArrayRankSpecifier(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PointerTypeSyntax GeneratePointerType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PointerType(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.AsteriskToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NullableTypeSyntax GenerateNullableType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NullableType(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.QuestionToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TupleTypeSyntax GenerateTupleType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TupleType(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TupleElementSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TupleElementSyntax GenerateTupleElement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TupleElement(GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OmittedTypeArgumentSyntax GenerateOmittedTypeArgument()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OmittedTypeArgument(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OmittedTypeArgumentToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RefTypeSyntax GenerateRefType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RefType(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.RefKeyword), null, GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParenthesizedExpressionSyntax GenerateParenthesizedExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ParenthesizedExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TupleExpressionSyntax GenerateTupleExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TupleExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArgumentSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PrefixUnaryExpressionSyntax GeneratePrefixUnaryExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PrefixUnaryExpression(SyntaxKind.UnaryPlusExpression, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AwaitExpressionSyntax GenerateAwaitExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AwaitExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.AwaitKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PostfixUnaryExpressionSyntax GeneratePostfixUnaryExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PostfixUnaryExpression(SyntaxKind.PostIncrementExpression, GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PlusPlusToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberAccessExpressionSyntax GenerateMemberAccessExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConditionalAccessExpressionSyntax GenerateConditionalAccessExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConditionalAccessExpression(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberBindingExpressionSyntax GenerateMemberBindingExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.MemberBindingExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ElementBindingExpressionSyntax GenerateElementBindingExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ElementBindingExpression(GenerateBracketedArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RangeExpressionSyntax GenerateRangeExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RangeExpression(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotDotToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ImplicitElementAccessSyntax GenerateImplicitElementAccess()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ImplicitElementAccess(GenerateBracketedArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BinaryExpressionSyntax GenerateBinaryExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AssignmentExpressionSyntax GenerateAssignmentExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConditionalExpressionSyntax GenerateConditionalExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConditionalExpression(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ThisExpressionSyntax GenerateThisExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ThisExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ThisKeyword));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BaseExpressionSyntax GenerateBaseExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BaseExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.BaseKeyword));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LiteralExpressionSyntax GenerateLiteralExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LiteralExpression(SyntaxKind.ArgListExpression, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ArgListKeyword));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MakeRefExpressionSyntax GenerateMakeRefExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.MakeRefExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.MakeRefKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RefTypeExpressionSyntax GenerateRefTypeExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RefTypeExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.RefTypeKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RefValueExpressionSyntax GenerateRefValueExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RefValueExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.RefValueKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CommaToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CheckedExpressionSyntax GenerateCheckedExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CheckedExpression(SyntaxKind.CheckedExpression, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CheckedKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DefaultExpressionSyntax GenerateDefaultExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DefaultExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DefaultKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeOfExpressionSyntax GenerateTypeOfExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeOfExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.TypeOfKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SizeOfExpressionSyntax GenerateSizeOfExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SizeOfExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SizeOfKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InvocationExpressionSyntax GenerateInvocationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InvocationExpression(GenerateIdentifierName(), GenerateArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ElementAccessExpressionSyntax GenerateElementAccessExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ElementAccessExpression(GenerateIdentifierName(), GenerateBracketedArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArgumentListSyntax GenerateArgumentList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ArgumentList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArgumentSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BracketedArgumentListSyntax GenerateBracketedArgumentList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BracketedArgumentList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArgumentSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArgumentSyntax GenerateArgument()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Argument(null, null, GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NameColonSyntax GenerateNameColon()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NameColon(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DeclarationExpressionSyntax GenerateDeclarationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DeclarationExpression(GenerateIdentifierName(), GenerateSingleVariableDesignation());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CastExpressionSyntax GenerateCastExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CastExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AnonymousMethodExpressionSyntax GenerateAnonymousMethodExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AnonymousMethodExpression(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DelegateKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IdentifierName(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Body")));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SimpleLambdaExpressionSyntax GenerateSimpleLambdaExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SimpleLambdaExpression(null, GenerateParameter(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IdentifierName(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Body")));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RefExpressionSyntax GenerateRefExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RefExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.RefKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParenthesizedLambdaExpressionSyntax GenerateParenthesizedLambdaExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ParenthesizedLambdaExpression(null, GenerateParameterList(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IdentifierName(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Body")));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InitializerExpressionSyntax GenerateInitializerExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InitializerExpression(SyntaxKind.ObjectInitializerExpression, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ObjectCreationExpressionSyntax GenerateObjectCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ObjectCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateIdentifierName(), null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AnonymousObjectMemberDeclaratorSyntax GenerateAnonymousObjectMemberDeclarator()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AnonymousObjectMemberDeclarator(null, GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AnonymousObjectCreationExpressionSyntax GenerateAnonymousObjectCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AnonymousObjectCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NewKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AnonymousObjectMemberDeclaratorSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArrayCreationExpressionSyntax GenerateArrayCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ArrayCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateArrayType(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ImplicitArrayCreationExpressionSyntax GenerateImplicitArrayCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ImplicitArrayCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NewKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.StackAllocArrayCreationExpressionSyntax GenerateStackAllocArrayCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.StackAllocArrayCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ImplicitStackAllocArrayCreationExpressionSyntax GenerateImplicitStackAllocArrayCreationExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ImplicitStackAllocArrayCreationExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QueryExpressionSyntax GenerateQueryExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.QueryExpression(GenerateFromClause(), GenerateQueryBody());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QueryBodySyntax GenerateQueryBody()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.QueryBody(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QueryClauseSyntax>(), GenerateSelectClause(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.FromClauseSyntax GenerateFromClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.FromClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.FromKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LetClauseSyntax GenerateLetClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LetClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LetKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.JoinClauseSyntax GenerateJoinClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.JoinClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.JoinKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OnKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsKeyword), GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.JoinIntoClauseSyntax GenerateJoinIntoClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.JoinIntoClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.IntoKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WhereClauseSyntax GenerateWhereClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WhereClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OrderByClauseSyntax GenerateOrderByClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OrderByClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OrderByKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OrderingSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OrderingSyntax GenerateOrdering()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Ordering(SyntaxKind.AscendingOrdering, GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SelectClauseSyntax GenerateSelectClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SelectClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SelectKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.GroupClauseSyntax GenerateGroupClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.GroupClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GroupKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ByKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QueryContinuationSyntax GenerateQueryContinuation()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.QueryContinuation(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.IntoKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), GenerateQueryBody());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OmittedArraySizeExpressionSyntax GenerateOmittedArraySizeExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OmittedArraySizeExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OmittedArraySizeExpressionToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolatedStringExpressionSyntax GenerateInterpolatedStringExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InterpolatedStringExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InterpolatedStringStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolatedStringContentSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InterpolatedStringEndToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IsPatternExpressionSyntax GenerateIsPatternExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IsPatternExpression(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.IsKeyword), GenerateDeclarationPattern());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ThrowExpressionSyntax GenerateThrowExpression()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ThrowExpression(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ThrowKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WhenClauseSyntax GenerateWhenClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WhenClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhenKeyword), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DeclarationPatternSyntax GenerateDeclarationPattern()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DeclarationPattern(GenerateIdentifierName(), GenerateSingleVariableDesignation());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConstantPatternSyntax GenerateConstantPattern()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConstantPattern(GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolatedStringTextSyntax GenerateInterpolatedStringText()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InterpolatedStringText(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolationSyntax GenerateInterpolation()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Interpolation(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), GenerateIdentifierName(), null, null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolationAlignmentClauseSyntax GenerateInterpolationAlignmentClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InterpolationAlignmentClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("CommaToken"), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterpolationFormatClauseSyntax GenerateInterpolationFormatClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InterpolationFormatClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("ColonToken"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.GlobalStatementSyntax GenerateGlobalStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.GlobalStatement(GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BlockSyntax GenerateBlock()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Block(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.StatementSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LocalFunctionStatementSyntax GenerateLocalFunctionStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LocalFunctionStatement(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LocalDeclarationStatementSyntax GenerateLocalDeclarationStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LocalDeclarationStatement(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateVariableDeclaration(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.VariableDeclarationSyntax GenerateVariableDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.VariableDeclaration(GenerateIdentifierName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.VariableDeclaratorSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.VariableDeclaratorSyntax GenerateVariableDeclarator()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.VariableDeclarator(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EqualsValueClauseSyntax GenerateEqualsValueClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EqualsValueClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SingleVariableDesignationSyntax GenerateSingleVariableDesignation()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SingleVariableDesignation(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DiscardDesignationSyntax GenerateDiscardDesignation()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DiscardDesignation(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.UnderscoreToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParenthesizedVariableDesignationSyntax GenerateParenthesizedVariableDesignation()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ParenthesizedVariableDesignation(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.VariableDesignationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionStatementSyntax GenerateExpressionStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ExpressionStatement(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EmptyStatementSyntax GenerateEmptyStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EmptyStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LabeledStatementSyntax GenerateLabeledStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LabeledStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.GotoStatementSyntax GenerateGotoStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GotoKeyword), null, null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BreakStatementSyntax GenerateBreakStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BreakStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.BreakKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ContinueStatementSyntax GenerateContinueStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ContinueStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ContinueKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ReturnStatementSyntax GenerateReturnStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ReturnStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ReturnKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ThrowStatementSyntax GenerateThrowStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ThrowStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ThrowKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.YieldStatementSyntax GenerateYieldStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.YieldStatement(SyntaxKind.YieldReturnStatement, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.YieldKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ReturnKeyword), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WhileStatementSyntax GenerateWhileStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WhileStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhileKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DoStatementSyntax GenerateDoStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DoStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DoKeyword), GenerateBlock(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhileKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ForStatementSyntax GenerateForStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ForStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ForKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ForEachStatementSyntax GenerateForEachStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ForEachStatement(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ForEachKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ForEachVariableStatementSyntax GenerateForEachVariableStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ForEachVariableStatement(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ForEachKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UsingStatementSyntax GenerateUsingStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.UsingStatement(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.UsingKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), null, null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.FixedStatementSyntax GenerateFixedStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.FixedStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.FixedKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateVariableDeclaration(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CheckedStatementSyntax GenerateCheckedStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CheckedStatement(SyntaxKind.CheckedStatement, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CheckedKeyword), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UnsafeStatementSyntax GenerateUnsafeStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.UnsafeStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.UnsafeKeyword), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LockStatementSyntax GenerateLockStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LockStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LockKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IfStatementSyntax GenerateIfStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IfStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.IfKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ElseClauseSyntax GenerateElseClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ElseClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ElseKeyword), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SwitchStatementSyntax GenerateSwitchStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SwitchStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SwitchKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SwitchSectionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SwitchSectionSyntax GenerateSwitchSection()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SwitchSection(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SwitchLabelSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.StatementSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CasePatternSwitchLabelSyntax GenerateCasePatternSwitchLabel()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CasePatternSwitchLabel(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateDeclarationPattern(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("ColonToken"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CaseSwitchLabelSyntax GenerateCaseSwitchLabel()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CaseSwitchLabel(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("ColonToken"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DefaultSwitchLabelSyntax GenerateDefaultSwitchLabel()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DefaultSwitchLabel(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DefaultKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("ColonToken"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TryStatementSyntax GenerateTryStatement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TryStatement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.TryKeyword), GenerateBlock(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CatchClauseSyntax>(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CatchClauseSyntax GenerateCatchClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CatchClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CatchKeyword), null, null, GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CatchDeclarationSyntax GenerateCatchDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CatchDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CatchFilterClauseSyntax GenerateCatchFilterClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CatchFilterClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhenKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.FinallyClauseSyntax GenerateFinallyClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.FinallyClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.FinallyKeyword), GenerateBlock());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CompilationUnitSyntax GenerateCompilationUnit()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CompilationUnit(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExternAliasDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UsingDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfFileToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExternAliasDirectiveSyntax GenerateExternAliasDirective()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ExternAliasDirective(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ExternKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.AliasKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UsingDirectiveSyntax GenerateUsingDirective()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.UsingDirective(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.UsingKeyword), null, null, GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NamespaceDeclarationSyntax GenerateNamespaceDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NamespaceDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NamespaceKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExternAliasDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UsingDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax GenerateAttributeList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AttributeList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeTargetSpecifierSyntax GenerateAttributeTargetSpecifier()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AttributeTargetSpecifier(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeSyntax GenerateAttribute()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Attribute(GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeArgumentListSyntax GenerateAttributeArgumentList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AttributeArgumentList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeArgumentSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeArgumentSyntax GenerateAttributeArgument()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AttributeArgument(null, null, GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NameEqualsSyntax GenerateNameEquals()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NameEquals(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterListSyntax GenerateTypeParameterList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeParameterList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LessThanToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterSyntax GenerateTypeParameter()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeParameter(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ClassDeclarationSyntax GenerateClassDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ClassDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ClassKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.StructDeclarationSyntax GenerateStructDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.StructDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.StructKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.InterfaceDeclarationSyntax GenerateInterfaceDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.InterfaceDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.InterfaceKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EnumDeclarationSyntax GenerateEnumDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EnumDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EnumKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EnumMemberDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DelegateDeclarationSyntax GenerateDelegateDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DelegateDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DelegateKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EnumMemberDeclarationSyntax GenerateEnumMemberDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EnumMemberDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BaseListSyntax GenerateBaseList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BaseList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BaseTypeSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SimpleBaseTypeSyntax GenerateSimpleBaseType()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SimpleBaseType(GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax GenerateTypeParameterConstraintClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeParameterConstraintClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintSyntax>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConstructorConstraintSyntax GenerateConstructorConstraint()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConstructorConstraint(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NewKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ClassOrStructConstraintSyntax GenerateClassOrStructConstraint()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ClassKeyword), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeConstraintSyntax GenerateTypeConstraint()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeConstraint(GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.FieldDeclarationSyntax GenerateFieldDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.FieldDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateVariableDeclaration(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EventFieldDeclarationSyntax GenerateEventFieldDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EventFieldDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateVariableDeclaration(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExplicitInterfaceSpecifierSyntax GenerateExplicitInterfaceSpecifier()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ExplicitInterfaceSpecifier(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.MethodDeclarationSyntax GenerateMethodDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.MethodDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OperatorDeclarationSyntax GenerateOperatorDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OperatorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OperatorKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateParameterList(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConversionOperatorDeclarationSyntax GenerateConversionOperatorDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConversionOperatorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), GenerateParameterList(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConstructorDeclarationSyntax GenerateConstructorDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConstructorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), null, null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConstructorInitializerSyntax GenerateConstructorInitializer()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConstructorInitializer(SyntaxKind.BaseConstructorInitializer, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.BaseKeyword), GenerateArgumentList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DestructorDeclarationSyntax GenerateDestructorDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DestructorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.TildeToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PropertyDeclarationSyntax GeneratePropertyDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PropertyDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null, null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ArrowExpressionClauseSyntax GenerateArrowExpressionClause()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ArrowExpressionClause(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EventDeclarationSyntax GenerateEventDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EventDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateIdentifierName(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), GenerateAccessorList());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IndexerDeclarationSyntax GenerateIndexerDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IndexerDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ThisKeyword), GenerateBracketedParameterList(), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AccessorListSyntax GenerateAccessorList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AccessorList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AccessorDeclarationSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AccessorDeclarationSyntax GenerateAccessorDeclaration()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GetKeyword), null, null, null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParameterListSyntax GenerateParameterList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ParameterList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParameterSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BracketedParameterListSyntax GenerateBracketedParameterList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BracketedParameterList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParameterSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ParameterSyntax GenerateParameter()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Parameter(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IncompleteMemberSyntax GenerateIncompleteMember()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IncompleteMember(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SkippedTokensTriviaSyntax GenerateSkippedTokensTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.SkippedTokensTrivia(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DocumentationCommentTriviaSyntax GenerateDocumentationCommentTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DocumentationCommentTrivia(SyntaxKind.SingleLineDocumentationCommentTrivia, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlNodeSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDocumentationCommentToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.TypeCrefSyntax GenerateTypeCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.TypeCref(GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.QualifiedCrefSyntax GenerateQualifiedCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.QualifiedCref(GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DotToken), GenerateNameMemberCref());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NameMemberCrefSyntax GenerateNameMemberCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NameMemberCref(GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IndexerMemberCrefSyntax GenerateIndexerMemberCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IndexerMemberCref(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ThisKeyword), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.OperatorMemberCrefSyntax GenerateOperatorMemberCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.OperatorMemberCref(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OperatorKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PlusToken), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ConversionOperatorMemberCrefSyntax GenerateConversionOperatorMemberCref()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ConversionOperatorMemberCref(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), null);
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CrefParameterListSyntax GenerateCrefParameterList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CrefParameterList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CrefParameterSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CrefBracketedParameterListSyntax GenerateCrefBracketedParameterList()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CrefBracketedParameterList(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CrefParameterSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.CrefParameterSyntax GenerateCrefParameter()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.CrefParameter(null, GenerateIdentifierName());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlElementSyntax GenerateXmlElement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlElement(GenerateXmlElementStartTag(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlNodeSyntax>(), GenerateXmlElementEndTag());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlElementStartTagSyntax GenerateXmlElementStartTag()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlElementStartTag(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlAttributeSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlElementEndTagSyntax GenerateXmlElementEndTag()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlElementEndTag(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LessThanSlashToken), GenerateXmlName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlEmptyElementSyntax GenerateXmlEmptyElement()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlEmptyElement(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlAttributeSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SlashGreaterThanToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlNameSyntax GenerateXmlName()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlName(null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("LocalName"));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlPrefixSyntax GenerateXmlPrefix()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlPrefix(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Prefix"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlTextAttributeSyntax GenerateXmlTextAttribute()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlTextAttribute(GenerateXmlName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlCrefAttributeSyntax GenerateXmlCrefAttribute()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlCrefAttribute(GenerateXmlName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateTypeCref(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlNameAttributeSyntax GenerateXmlNameAttribute()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlNameAttribute(GenerateXmlName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EqualsToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlTextSyntax GenerateXmlText()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlText(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlCDataSectionSyntax GenerateXmlCDataSection()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlCDataSection(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlCDataStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlCDataEndToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlProcessingInstructionSyntax GenerateXmlProcessingInstruction()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlProcessingInstruction(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionStartToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionEndToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.XmlCommentSyntax GenerateXmlComment()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.XmlComment(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlCommentStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxToken>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.XmlCommentEndToken));
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.IfDirectiveTriviaSyntax GenerateIfDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.IfDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.IfKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ElifDirectiveTriviaSyntax GenerateElifDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ElifDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ElifKeyword), GenerateIdentifierName(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ElseDirectiveTriviaSyntax GenerateElseDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ElseDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ElseKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EndIfDirectiveTriviaSyntax GenerateEndIfDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EndIfDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndIfKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.RegionDirectiveTriviaSyntax GenerateRegionDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.RegionDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.RegionKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.EndRegionDirectiveTriviaSyntax GenerateEndRegionDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.EndRegionDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndRegionKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ErrorDirectiveTriviaSyntax GenerateErrorDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ErrorDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ErrorKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.WarningDirectiveTriviaSyntax GenerateWarningDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.WarningDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WarningKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.BadDirectiveTriviaSyntax GenerateBadDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.BadDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Identifier"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.DefineDirectiveTriviaSyntax GenerateDefineDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.DefineDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DefineKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Name"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.UndefDirectiveTriviaSyntax GenerateUndefDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.UndefDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.UndefKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Identifier("Name"), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LineDirectiveTriviaSyntax GenerateLineDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LineDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LineKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "1", 1, null), null, Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PragmaWarningDirectiveTriviaSyntax GeneratePragmaWarningDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PragmaWarningDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PragmaKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.WarningKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.DisableKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ExpressionSyntax>(), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.PragmaChecksumDirectiveTriviaSyntax GeneratePragmaChecksumDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.PragmaChecksumDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.PragmaKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ChecksumKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "string", "string", null), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "string", "string", null), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "string", "string", null), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ReferenceDirectiveTriviaSyntax GenerateReferenceDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ReferenceDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ReferenceKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "string", "string", null), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.LoadDirectiveTriviaSyntax GenerateLoadDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.LoadDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.LoadKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Literal(null, "string", "string", null), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.ShebangDirectiveTriviaSyntax GenerateShebangDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.ShebangDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.ExclamationToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
-        
-        private static Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.NullableDirectiveTriviaSyntax GenerateNullableDirectiveTrivia()
-        {
-            return Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.NullableDirectiveTrivia(Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.HashToken), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.NullableKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EnableKeyword), Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax.SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+        private static Syntax.InternalSyntax.IdentifierNameSyntax GenerateIdentifierName()
+            => InternalSyntaxFactory.IdentifierName(InternalSyntaxFactory.Identifier("Identifier"));
+        
+        private static Syntax.InternalSyntax.QualifiedNameSyntax GenerateQualifiedName()
+            => InternalSyntaxFactory.QualifiedName(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.GenericNameSyntax GenerateGenericName()
+            => InternalSyntaxFactory.GenericName(InternalSyntaxFactory.Identifier("Identifier"), GenerateTypeArgumentList());
+        
+        private static Syntax.InternalSyntax.TypeArgumentListSyntax GenerateTypeArgumentList()
+            => InternalSyntaxFactory.TypeArgumentList(InternalSyntaxFactory.Token(SyntaxKind.LessThanToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.TypeSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.GreaterThanToken));
+        
+        private static Syntax.InternalSyntax.AliasQualifiedNameSyntax GenerateAliasQualifiedName()
+            => InternalSyntaxFactory.AliasQualifiedName(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.ColonColonToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.PredefinedTypeSyntax GeneratePredefinedType()
+            => InternalSyntaxFactory.PredefinedType(InternalSyntaxFactory.Token(SyntaxKind.BoolKeyword));
+        
+        private static Syntax.InternalSyntax.ArrayTypeSyntax GenerateArrayType()
+            => InternalSyntaxFactory.ArrayType(GenerateIdentifierName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.ArrayRankSpecifierSyntax>());
+        
+        private static Syntax.InternalSyntax.ArrayRankSpecifierSyntax GenerateArrayRankSpecifier()
+            => InternalSyntaxFactory.ArrayRankSpecifier(InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ExpressionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+        
+        private static Syntax.InternalSyntax.PointerTypeSyntax GeneratePointerType()
+            => InternalSyntaxFactory.PointerType(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.AsteriskToken));
+        
+        private static Syntax.InternalSyntax.NullableTypeSyntax GenerateNullableType()
+            => InternalSyntaxFactory.NullableType(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.QuestionToken));
+        
+        private static Syntax.InternalSyntax.TupleTypeSyntax GenerateTupleType()
+            => InternalSyntaxFactory.TupleType(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.TupleElementSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.TupleElementSyntax GenerateTupleElement()
+            => InternalSyntaxFactory.TupleElement(GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.OmittedTypeArgumentSyntax GenerateOmittedTypeArgument()
+            => InternalSyntaxFactory.OmittedTypeArgument(InternalSyntaxFactory.Token(SyntaxKind.OmittedTypeArgumentToken));
+        
+        private static Syntax.InternalSyntax.RefTypeSyntax GenerateRefType()
+            => InternalSyntaxFactory.RefType(InternalSyntaxFactory.Token(SyntaxKind.RefKeyword), null, GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ParenthesizedExpressionSyntax GenerateParenthesizedExpression()
+            => InternalSyntaxFactory.ParenthesizedExpression(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.TupleExpressionSyntax GenerateTupleExpression()
+            => InternalSyntaxFactory.TupleExpression(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ArgumentSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.PrefixUnaryExpressionSyntax GeneratePrefixUnaryExpression()
+            => InternalSyntaxFactory.PrefixUnaryExpression(SyntaxKind.UnaryPlusExpression, InternalSyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.AwaitExpressionSyntax GenerateAwaitExpression()
+            => InternalSyntaxFactory.AwaitExpression(InternalSyntaxFactory.Token(SyntaxKind.AwaitKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.PostfixUnaryExpressionSyntax GeneratePostfixUnaryExpression()
+            => InternalSyntaxFactory.PostfixUnaryExpression(SyntaxKind.PostIncrementExpression, GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.PlusPlusToken));
+        
+        private static Syntax.InternalSyntax.MemberAccessExpressionSyntax GenerateMemberAccessExpression()
+            => InternalSyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ConditionalAccessExpressionSyntax GenerateConditionalAccessExpression()
+            => InternalSyntaxFactory.ConditionalAccessExpression(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.MemberBindingExpressionSyntax GenerateMemberBindingExpression()
+            => InternalSyntaxFactory.MemberBindingExpression(InternalSyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ElementBindingExpressionSyntax GenerateElementBindingExpression()
+            => InternalSyntaxFactory.ElementBindingExpression(GenerateBracketedArgumentList());
+        
+        private static Syntax.InternalSyntax.RangeExpressionSyntax GenerateRangeExpression()
+            => InternalSyntaxFactory.RangeExpression(null, InternalSyntaxFactory.Token(SyntaxKind.DotDotToken), null);
+        
+        private static Syntax.InternalSyntax.ImplicitElementAccessSyntax GenerateImplicitElementAccess()
+            => InternalSyntaxFactory.ImplicitElementAccess(GenerateBracketedArgumentList());
+        
+        private static Syntax.InternalSyntax.BinaryExpressionSyntax GenerateBinaryExpression()
+            => InternalSyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.AssignmentExpressionSyntax GenerateAssignmentExpression()
+            => InternalSyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ConditionalExpressionSyntax GenerateConditionalExpression()
+            => InternalSyntaxFactory.ConditionalExpression(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.ColonToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ThisExpressionSyntax GenerateThisExpression()
+            => InternalSyntaxFactory.ThisExpression(InternalSyntaxFactory.Token(SyntaxKind.ThisKeyword));
+        
+        private static Syntax.InternalSyntax.BaseExpressionSyntax GenerateBaseExpression()
+            => InternalSyntaxFactory.BaseExpression(InternalSyntaxFactory.Token(SyntaxKind.BaseKeyword));
+        
+        private static Syntax.InternalSyntax.LiteralExpressionSyntax GenerateLiteralExpression()
+            => InternalSyntaxFactory.LiteralExpression(SyntaxKind.ArgListExpression, InternalSyntaxFactory.Token(SyntaxKind.ArgListKeyword));
+        
+        private static Syntax.InternalSyntax.MakeRefExpressionSyntax GenerateMakeRefExpression()
+            => InternalSyntaxFactory.MakeRefExpression(InternalSyntaxFactory.Token(SyntaxKind.MakeRefKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.RefTypeExpressionSyntax GenerateRefTypeExpression()
+            => InternalSyntaxFactory.RefTypeExpression(InternalSyntaxFactory.Token(SyntaxKind.RefTypeKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.RefValueExpressionSyntax GenerateRefValueExpression()
+            => InternalSyntaxFactory.RefValueExpression(InternalSyntaxFactory.Token(SyntaxKind.RefValueKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CommaToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.CheckedExpressionSyntax GenerateCheckedExpression()
+            => InternalSyntaxFactory.CheckedExpression(SyntaxKind.CheckedExpression, InternalSyntaxFactory.Token(SyntaxKind.CheckedKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.DefaultExpressionSyntax GenerateDefaultExpression()
+            => InternalSyntaxFactory.DefaultExpression(InternalSyntaxFactory.Token(SyntaxKind.DefaultKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.TypeOfExpressionSyntax GenerateTypeOfExpression()
+            => InternalSyntaxFactory.TypeOfExpression(InternalSyntaxFactory.Token(SyntaxKind.TypeOfKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.SizeOfExpressionSyntax GenerateSizeOfExpression()
+            => InternalSyntaxFactory.SizeOfExpression(InternalSyntaxFactory.Token(SyntaxKind.SizeOfKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.InvocationExpressionSyntax GenerateInvocationExpression()
+            => InternalSyntaxFactory.InvocationExpression(GenerateIdentifierName(), GenerateArgumentList());
+        
+        private static Syntax.InternalSyntax.ElementAccessExpressionSyntax GenerateElementAccessExpression()
+            => InternalSyntaxFactory.ElementAccessExpression(GenerateIdentifierName(), GenerateBracketedArgumentList());
+        
+        private static Syntax.InternalSyntax.ArgumentListSyntax GenerateArgumentList()
+            => InternalSyntaxFactory.ArgumentList(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ArgumentSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.BracketedArgumentListSyntax GenerateBracketedArgumentList()
+            => InternalSyntaxFactory.BracketedArgumentList(InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ArgumentSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+        
+        private static Syntax.InternalSyntax.ArgumentSyntax GenerateArgument()
+            => InternalSyntaxFactory.Argument(null, null, GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.NameColonSyntax GenerateNameColon()
+            => InternalSyntaxFactory.NameColon(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.ColonToken));
+        
+        private static Syntax.InternalSyntax.DeclarationExpressionSyntax GenerateDeclarationExpression()
+            => InternalSyntaxFactory.DeclarationExpression(GenerateIdentifierName(), GenerateSingleVariableDesignation());
+        
+        private static Syntax.InternalSyntax.CastExpressionSyntax GenerateCastExpression()
+            => InternalSyntaxFactory.CastExpression(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.AnonymousMethodExpressionSyntax GenerateAnonymousMethodExpression()
+            => InternalSyntaxFactory.AnonymousMethodExpression(null, InternalSyntaxFactory.Token(SyntaxKind.DelegateKeyword), null, GenerateBlock(), null);
+        
+        private static Syntax.InternalSyntax.SimpleLambdaExpressionSyntax GenerateSimpleLambdaExpression()
+            => InternalSyntaxFactory.SimpleLambdaExpression(null, GenerateParameter(), InternalSyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), null, null);
+        
+        private static Syntax.InternalSyntax.RefExpressionSyntax GenerateRefExpression()
+            => InternalSyntaxFactory.RefExpression(InternalSyntaxFactory.Token(SyntaxKind.RefKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.ParenthesizedLambdaExpressionSyntax GenerateParenthesizedLambdaExpression()
+            => InternalSyntaxFactory.ParenthesizedLambdaExpression(null, GenerateParameterList(), InternalSyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), null, null);
+        
+        private static Syntax.InternalSyntax.InitializerExpressionSyntax GenerateInitializerExpression()
+            => InternalSyntaxFactory.InitializerExpression(SyntaxKind.ObjectInitializerExpression, InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ExpressionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.ObjectCreationExpressionSyntax GenerateObjectCreationExpression()
+            => InternalSyntaxFactory.ObjectCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateIdentifierName(), null, null);
+        
+        private static Syntax.InternalSyntax.AnonymousObjectMemberDeclaratorSyntax GenerateAnonymousObjectMemberDeclarator()
+            => InternalSyntaxFactory.AnonymousObjectMemberDeclarator(null, GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.AnonymousObjectCreationExpressionSyntax GenerateAnonymousObjectCreationExpression()
+            => InternalSyntaxFactory.AnonymousObjectCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.NewKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.AnonymousObjectMemberDeclaratorSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.ArrayCreationExpressionSyntax GenerateArrayCreationExpression()
+            => InternalSyntaxFactory.ArrayCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateArrayType(), null);
+        
+        private static Syntax.InternalSyntax.ImplicitArrayCreationExpressionSyntax GenerateImplicitArrayCreationExpression()
+            => InternalSyntaxFactory.ImplicitArrayCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.NewKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
+        
+        private static Syntax.InternalSyntax.StackAllocArrayCreationExpressionSyntax GenerateStackAllocArrayCreationExpression()
+            => InternalSyntaxFactory.StackAllocArrayCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.StackAllocKeyword), GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.ImplicitStackAllocArrayCreationExpressionSyntax GenerateImplicitStackAllocArrayCreationExpression()
+            => InternalSyntaxFactory.ImplicitStackAllocArrayCreationExpression(InternalSyntaxFactory.Token(SyntaxKind.StackAllocKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
+        
+        private static Syntax.InternalSyntax.QueryExpressionSyntax GenerateQueryExpression()
+            => InternalSyntaxFactory.QueryExpression(GenerateFromClause(), GenerateQueryBody());
+        
+        private static Syntax.InternalSyntax.QueryBodySyntax GenerateQueryBody()
+            => InternalSyntaxFactory.QueryBody(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.QueryClauseSyntax>(), GenerateSelectClause(), null);
+        
+        private static Syntax.InternalSyntax.FromClauseSyntax GenerateFromClause()
+            => InternalSyntaxFactory.FromClause(InternalSyntaxFactory.Token(SyntaxKind.FromKeyword), null, InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.LetClauseSyntax GenerateLetClause()
+            => InternalSyntaxFactory.LetClause(InternalSyntaxFactory.Token(SyntaxKind.LetKeyword), InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.JoinClauseSyntax GenerateJoinClause()
+            => InternalSyntaxFactory.JoinClause(InternalSyntaxFactory.Token(SyntaxKind.JoinKeyword), null, InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.OnKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsKeyword), GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.JoinIntoClauseSyntax GenerateJoinIntoClause()
+            => InternalSyntaxFactory.JoinIntoClause(InternalSyntaxFactory.Token(SyntaxKind.IntoKeyword), InternalSyntaxFactory.Identifier("Identifier"));
+        
+        private static Syntax.InternalSyntax.WhereClauseSyntax GenerateWhereClause()
+            => InternalSyntaxFactory.WhereClause(InternalSyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.OrderByClauseSyntax GenerateOrderByClause()
+            => InternalSyntaxFactory.OrderByClause(InternalSyntaxFactory.Token(SyntaxKind.OrderByKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.OrderingSyntax>());
+        
+        private static Syntax.InternalSyntax.OrderingSyntax GenerateOrdering()
+            => InternalSyntaxFactory.Ordering(SyntaxKind.AscendingOrdering, GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.SelectClauseSyntax GenerateSelectClause()
+            => InternalSyntaxFactory.SelectClause(InternalSyntaxFactory.Token(SyntaxKind.SelectKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.GroupClauseSyntax GenerateGroupClause()
+            => InternalSyntaxFactory.GroupClause(InternalSyntaxFactory.Token(SyntaxKind.GroupKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.ByKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.QueryContinuationSyntax GenerateQueryContinuation()
+            => InternalSyntaxFactory.QueryContinuation(InternalSyntaxFactory.Token(SyntaxKind.IntoKeyword), InternalSyntaxFactory.Identifier("Identifier"), GenerateQueryBody());
+        
+        private static Syntax.InternalSyntax.OmittedArraySizeExpressionSyntax GenerateOmittedArraySizeExpression()
+            => InternalSyntaxFactory.OmittedArraySizeExpression(InternalSyntaxFactory.Token(SyntaxKind.OmittedArraySizeExpressionToken));
+        
+        private static Syntax.InternalSyntax.InterpolatedStringExpressionSyntax GenerateInterpolatedStringExpression()
+            => InternalSyntaxFactory.InterpolatedStringExpression(InternalSyntaxFactory.Token(SyntaxKind.InterpolatedStringStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.InterpolatedStringContentSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.InterpolatedStringEndToken));
+        
+        private static Syntax.InternalSyntax.IsPatternExpressionSyntax GenerateIsPatternExpression()
+            => InternalSyntaxFactory.IsPatternExpression(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.IsKeyword), GenerateDiscardPattern());
+        
+        private static Syntax.InternalSyntax.ThrowExpressionSyntax GenerateThrowExpression()
+            => InternalSyntaxFactory.ThrowExpression(InternalSyntaxFactory.Token(SyntaxKind.ThrowKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.WhenClauseSyntax GenerateWhenClause()
+            => InternalSyntaxFactory.WhenClause(InternalSyntaxFactory.Token(SyntaxKind.WhenKeyword), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.DiscardPatternSyntax GenerateDiscardPattern()
+            => InternalSyntaxFactory.DiscardPattern(InternalSyntaxFactory.Token(SyntaxKind.UnderscoreToken));
+        
+        private static Syntax.InternalSyntax.DeclarationPatternSyntax GenerateDeclarationPattern()
+            => InternalSyntaxFactory.DeclarationPattern(GenerateIdentifierName(), GenerateSingleVariableDesignation());
+        
+        private static Syntax.InternalSyntax.VarPatternSyntax GenerateVarPattern()
+            => InternalSyntaxFactory.VarPattern(InternalSyntaxFactory.Token(SyntaxKind.VarKeyword), GenerateSingleVariableDesignation());
+        
+        private static Syntax.InternalSyntax.RecursivePatternSyntax GenerateRecursivePattern()
+            => InternalSyntaxFactory.RecursivePattern(null, null, null, null);
+        
+        private static Syntax.InternalSyntax.PositionalPatternClauseSyntax GeneratePositionalPatternClause()
+            => InternalSyntaxFactory.PositionalPatternClause(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.SubpatternSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.PropertyPatternClauseSyntax GeneratePropertyPatternClause()
+            => InternalSyntaxFactory.PropertyPatternClause(InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.SubpatternSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.SubpatternSyntax GenerateSubpattern()
+            => InternalSyntaxFactory.Subpattern(null, GenerateDiscardPattern());
+        
+        private static Syntax.InternalSyntax.ConstantPatternSyntax GenerateConstantPattern()
+            => InternalSyntaxFactory.ConstantPattern(GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.InterpolatedStringTextSyntax GenerateInterpolatedStringText()
+            => InternalSyntaxFactory.InterpolatedStringText(InternalSyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
+        
+        private static Syntax.InternalSyntax.InterpolationSyntax GenerateInterpolation()
+            => InternalSyntaxFactory.Interpolation(InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), GenerateIdentifierName(), null, null, InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.InterpolationAlignmentClauseSyntax GenerateInterpolationAlignmentClause()
+            => InternalSyntaxFactory.InterpolationAlignmentClause(InternalSyntaxFactory.Identifier("CommaToken"), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.InterpolationFormatClauseSyntax GenerateInterpolationFormatClause()
+            => InternalSyntaxFactory.InterpolationFormatClause(InternalSyntaxFactory.Identifier("ColonToken"), InternalSyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
+        
+        private static Syntax.InternalSyntax.GlobalStatementSyntax GenerateGlobalStatement()
+            => InternalSyntaxFactory.GlobalStatement(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.BlockSyntax GenerateBlock()
+            => InternalSyntaxFactory.Block(InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.StatementSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.LocalFunctionStatementSyntax GenerateLocalFunctionStatement()
+            => InternalSyntaxFactory.LocalFunctionStatement(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), InternalSyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), null, null, null);
+        
+        private static Syntax.InternalSyntax.LocalDeclarationStatementSyntax GenerateLocalDeclarationStatement()
+            => InternalSyntaxFactory.LocalDeclarationStatement(null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateVariableDeclaration(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.VariableDeclarationSyntax GenerateVariableDeclaration()
+            => InternalSyntaxFactory.VariableDeclaration(GenerateIdentifierName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.VariableDeclaratorSyntax>());
+        
+        private static Syntax.InternalSyntax.VariableDeclaratorSyntax GenerateVariableDeclarator()
+            => InternalSyntaxFactory.VariableDeclarator(InternalSyntaxFactory.Identifier("Identifier"), null, null);
+        
+        private static Syntax.InternalSyntax.EqualsValueClauseSyntax GenerateEqualsValueClause()
+            => InternalSyntaxFactory.EqualsValueClause(InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.SingleVariableDesignationSyntax GenerateSingleVariableDesignation()
+            => InternalSyntaxFactory.SingleVariableDesignation(InternalSyntaxFactory.Identifier("Identifier"));
+        
+        private static Syntax.InternalSyntax.DiscardDesignationSyntax GenerateDiscardDesignation()
+            => InternalSyntaxFactory.DiscardDesignation(InternalSyntaxFactory.Token(SyntaxKind.UnderscoreToken));
+        
+        private static Syntax.InternalSyntax.ParenthesizedVariableDesignationSyntax GenerateParenthesizedVariableDesignation()
+            => InternalSyntaxFactory.ParenthesizedVariableDesignation(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.VariableDesignationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.ExpressionStatementSyntax GenerateExpressionStatement()
+            => InternalSyntaxFactory.ExpressionStatement(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.EmptyStatementSyntax GenerateEmptyStatement()
+            => InternalSyntaxFactory.EmptyStatement(InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.LabeledStatementSyntax GenerateLabeledStatement()
+            => InternalSyntaxFactory.LabeledStatement(InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.ColonToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.GotoStatementSyntax GenerateGotoStatement()
+            => InternalSyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, InternalSyntaxFactory.Token(SyntaxKind.GotoKeyword), null, null, InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.BreakStatementSyntax GenerateBreakStatement()
+            => InternalSyntaxFactory.BreakStatement(InternalSyntaxFactory.Token(SyntaxKind.BreakKeyword), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.ContinueStatementSyntax GenerateContinueStatement()
+            => InternalSyntaxFactory.ContinueStatement(InternalSyntaxFactory.Token(SyntaxKind.ContinueKeyword), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.ReturnStatementSyntax GenerateReturnStatement()
+            => InternalSyntaxFactory.ReturnStatement(InternalSyntaxFactory.Token(SyntaxKind.ReturnKeyword), null, InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.ThrowStatementSyntax GenerateThrowStatement()
+            => InternalSyntaxFactory.ThrowStatement(InternalSyntaxFactory.Token(SyntaxKind.ThrowKeyword), null, InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.YieldStatementSyntax GenerateYieldStatement()
+            => InternalSyntaxFactory.YieldStatement(SyntaxKind.YieldReturnStatement, InternalSyntaxFactory.Token(SyntaxKind.YieldKeyword), InternalSyntaxFactory.Token(SyntaxKind.ReturnKeyword), null, InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.WhileStatementSyntax GenerateWhileStatement()
+            => InternalSyntaxFactory.WhileStatement(InternalSyntaxFactory.Token(SyntaxKind.WhileKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.DoStatementSyntax GenerateDoStatement()
+            => InternalSyntaxFactory.DoStatement(InternalSyntaxFactory.Token(SyntaxKind.DoKeyword), GenerateBlock(), InternalSyntaxFactory.Token(SyntaxKind.WhileKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.ForStatementSyntax GenerateForStatement()
+            => InternalSyntaxFactory.ForStatement(InternalSyntaxFactory.Token(SyntaxKind.ForKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ExpressionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken), null, InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ExpressionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.ForEachStatementSyntax GenerateForEachStatement()
+            => InternalSyntaxFactory.ForEachStatement(null, InternalSyntaxFactory.Token(SyntaxKind.ForEachKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.ForEachVariableStatementSyntax GenerateForEachVariableStatement()
+            => InternalSyntaxFactory.ForEachVariableStatement(null, InternalSyntaxFactory.Token(SyntaxKind.ForEachKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.UsingStatementSyntax GenerateUsingStatement()
+            => InternalSyntaxFactory.UsingStatement(null, InternalSyntaxFactory.Token(SyntaxKind.UsingKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), null, null, InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.FixedStatementSyntax GenerateFixedStatement()
+            => InternalSyntaxFactory.FixedStatement(InternalSyntaxFactory.Token(SyntaxKind.FixedKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateVariableDeclaration(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.CheckedStatementSyntax GenerateCheckedStatement()
+            => InternalSyntaxFactory.CheckedStatement(SyntaxKind.CheckedStatement, InternalSyntaxFactory.Token(SyntaxKind.CheckedKeyword), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.UnsafeStatementSyntax GenerateUnsafeStatement()
+            => InternalSyntaxFactory.UnsafeStatement(InternalSyntaxFactory.Token(SyntaxKind.UnsafeKeyword), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.LockStatementSyntax GenerateLockStatement()
+            => InternalSyntaxFactory.LockStatement(InternalSyntaxFactory.Token(SyntaxKind.LockKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.IfStatementSyntax GenerateIfStatement()
+            => InternalSyntaxFactory.IfStatement(InternalSyntaxFactory.Token(SyntaxKind.IfKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock(), null);
+        
+        private static Syntax.InternalSyntax.ElseClauseSyntax GenerateElseClause()
+            => InternalSyntaxFactory.ElseClause(InternalSyntaxFactory.Token(SyntaxKind.ElseKeyword), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.SwitchStatementSyntax GenerateSwitchStatement()
+            => InternalSyntaxFactory.SwitchStatement(InternalSyntaxFactory.Token(SyntaxKind.SwitchKeyword), null, GenerateIdentifierName(), null, InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SwitchSectionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.SwitchSectionSyntax GenerateSwitchSection()
+            => InternalSyntaxFactory.SwitchSection(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SwitchLabelSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.StatementSyntax>());
+        
+        private static Syntax.InternalSyntax.CasePatternSwitchLabelSyntax GenerateCasePatternSwitchLabel()
+            => InternalSyntaxFactory.CasePatternSwitchLabel(InternalSyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateDiscardPattern(), null, InternalSyntaxFactory.Identifier("ColonToken"));
+        
+        private static Syntax.InternalSyntax.CaseSwitchLabelSyntax GenerateCaseSwitchLabel()
+            => InternalSyntaxFactory.CaseSwitchLabel(InternalSyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Identifier("ColonToken"));
+        
+        private static Syntax.InternalSyntax.DefaultSwitchLabelSyntax GenerateDefaultSwitchLabel()
+            => InternalSyntaxFactory.DefaultSwitchLabel(InternalSyntaxFactory.Token(SyntaxKind.DefaultKeyword), InternalSyntaxFactory.Identifier("ColonToken"));
+        
+        private static Syntax.InternalSyntax.SwitchExpressionSyntax GenerateSwitchExpression()
+            => InternalSyntaxFactory.SwitchExpression(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.SwitchKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.SwitchExpressionArmSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.SwitchExpressionArmSyntax GenerateSwitchExpressionArm()
+            => InternalSyntaxFactory.SwitchExpressionArm(GenerateDiscardPattern(), null, InternalSyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.TryStatementSyntax GenerateTryStatement()
+            => InternalSyntaxFactory.TryStatement(InternalSyntaxFactory.Token(SyntaxKind.TryKeyword), GenerateBlock(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.CatchClauseSyntax>(), null);
+        
+        private static Syntax.InternalSyntax.CatchClauseSyntax GenerateCatchClause()
+            => InternalSyntaxFactory.CatchClause(InternalSyntaxFactory.Token(SyntaxKind.CatchKeyword), null, null, GenerateBlock());
+        
+        private static Syntax.InternalSyntax.CatchDeclarationSyntax GenerateCatchDeclaration()
+            => InternalSyntaxFactory.CatchDeclaration(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), null, InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.CatchFilterClauseSyntax GenerateCatchFilterClause()
+            => InternalSyntaxFactory.CatchFilterClause(InternalSyntaxFactory.Token(SyntaxKind.WhenKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.FinallyClauseSyntax GenerateFinallyClause()
+            => InternalSyntaxFactory.FinallyClause(InternalSyntaxFactory.Token(SyntaxKind.FinallyKeyword), GenerateBlock());
+        
+        private static Syntax.InternalSyntax.CompilationUnitSyntax GenerateCompilationUnit()
+            => InternalSyntaxFactory.CompilationUnit(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.ExternAliasDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.UsingDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.MemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.EndOfFileToken));
+        
+        private static Syntax.InternalSyntax.ExternAliasDirectiveSyntax GenerateExternAliasDirective()
+            => InternalSyntaxFactory.ExternAliasDirective(InternalSyntaxFactory.Token(SyntaxKind.ExternKeyword), InternalSyntaxFactory.Token(SyntaxKind.AliasKeyword), InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.UsingDirectiveSyntax GenerateUsingDirective()
+            => InternalSyntaxFactory.UsingDirective(InternalSyntaxFactory.Token(SyntaxKind.UsingKeyword), null, null, GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.NamespaceDeclarationSyntax GenerateNamespaceDeclaration()
+            => InternalSyntaxFactory.NamespaceDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.NamespaceKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.ExternAliasDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.UsingDirectiveSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.MemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
+        
+        private static Syntax.InternalSyntax.AttributeListSyntax GenerateAttributeList()
+            => InternalSyntaxFactory.AttributeList(InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.AttributeSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+        
+        private static Syntax.InternalSyntax.AttributeTargetSpecifierSyntax GenerateAttributeTargetSpecifier()
+            => InternalSyntaxFactory.AttributeTargetSpecifier(InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.ColonToken));
+        
+        private static Syntax.InternalSyntax.AttributeSyntax GenerateAttribute()
+            => InternalSyntaxFactory.Attribute(GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.AttributeArgumentListSyntax GenerateAttributeArgumentList()
+            => InternalSyntaxFactory.AttributeArgumentList(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.AttributeArgumentSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.AttributeArgumentSyntax GenerateAttributeArgument()
+            => InternalSyntaxFactory.AttributeArgument(null, null, GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.NameEqualsSyntax GenerateNameEquals()
+            => InternalSyntaxFactory.NameEquals(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken));
+        
+        private static Syntax.InternalSyntax.TypeParameterListSyntax GenerateTypeParameterList()
+            => InternalSyntaxFactory.TypeParameterList(InternalSyntaxFactory.Token(SyntaxKind.LessThanToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.TypeParameterSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.GreaterThanToken));
+        
+        private static Syntax.InternalSyntax.TypeParameterSyntax GenerateTypeParameter()
+            => InternalSyntaxFactory.TypeParameter(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), null, InternalSyntaxFactory.Identifier("Identifier"));
+        
+        private static Syntax.InternalSyntax.ClassDeclarationSyntax GenerateClassDeclaration()
+            => InternalSyntaxFactory.ClassDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.ClassKeyword), InternalSyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.MemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
+        
+        private static Syntax.InternalSyntax.StructDeclarationSyntax GenerateStructDeclaration()
+            => InternalSyntaxFactory.StructDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.StructKeyword), InternalSyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.MemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
+        
+        private static Syntax.InternalSyntax.InterfaceDeclarationSyntax GenerateInterfaceDeclaration()
+            => InternalSyntaxFactory.InterfaceDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.InterfaceKeyword), InternalSyntaxFactory.Identifier("Identifier"), null, null, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.MemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
+        
+        private static Syntax.InternalSyntax.EnumDeclarationSyntax GenerateEnumDeclaration()
+            => InternalSyntaxFactory.EnumDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.EnumKeyword), InternalSyntaxFactory.Identifier("Identifier"), null, InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.EnumMemberDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken), null);
+        
+        private static Syntax.InternalSyntax.DelegateDeclarationSyntax GenerateDelegateDeclaration()
+            => InternalSyntaxFactory.DelegateDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.DelegateKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.EnumMemberDeclarationSyntax GenerateEnumMemberDeclaration()
+            => InternalSyntaxFactory.EnumMemberDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Identifier("Identifier"), null);
+        
+        private static Syntax.InternalSyntax.BaseListSyntax GenerateBaseList()
+            => InternalSyntaxFactory.BaseList(InternalSyntaxFactory.Token(SyntaxKind.ColonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.BaseTypeSyntax>());
+        
+        private static Syntax.InternalSyntax.SimpleBaseTypeSyntax GenerateSimpleBaseType()
+            => InternalSyntaxFactory.SimpleBaseType(GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax GenerateTypeParameterConstraintClause()
+            => InternalSyntaxFactory.TypeParameterConstraintClause(InternalSyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.ColonToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.TypeParameterConstraintSyntax>());
+        
+        private static Syntax.InternalSyntax.ConstructorConstraintSyntax GenerateConstructorConstraint()
+            => InternalSyntaxFactory.ConstructorConstraint(InternalSyntaxFactory.Token(SyntaxKind.NewKeyword), InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.ClassOrStructConstraintSyntax GenerateClassOrStructConstraint()
+            => InternalSyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint, InternalSyntaxFactory.Token(SyntaxKind.ClassKeyword), null);
+        
+        private static Syntax.InternalSyntax.TypeConstraintSyntax GenerateTypeConstraint()
+            => InternalSyntaxFactory.TypeConstraint(GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.FieldDeclarationSyntax GenerateFieldDeclaration()
+            => InternalSyntaxFactory.FieldDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateVariableDeclaration(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.EventFieldDeclarationSyntax GenerateEventFieldDeclaration()
+            => InternalSyntaxFactory.EventFieldDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateVariableDeclaration(), InternalSyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        
+        private static Syntax.InternalSyntax.ExplicitInterfaceSpecifierSyntax GenerateExplicitInterfaceSpecifier()
+            => InternalSyntaxFactory.ExplicitInterfaceSpecifier(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.DotToken));
+        
+        private static Syntax.InternalSyntax.MethodDeclarationSyntax GenerateMethodDeclaration()
+            => InternalSyntaxFactory.MethodDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, InternalSyntaxFactory.Identifier("Identifier"), null, GenerateParameterList(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.TypeParameterConstraintClauseSyntax>(), null, null, null);
+        
+        private static Syntax.InternalSyntax.OperatorDeclarationSyntax GenerateOperatorDeclaration()
+            => InternalSyntaxFactory.OperatorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.OperatorKeyword), InternalSyntaxFactory.Token(SyntaxKind.PlusToken), GenerateParameterList(), null, null, null);
+        
+        private static Syntax.InternalSyntax.ConversionOperatorDeclarationSyntax GenerateConversionOperatorDeclaration()
+            => InternalSyntaxFactory.ConversionOperatorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.ImplicitKeyword), InternalSyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), GenerateParameterList(), null, null, null);
+        
+        private static Syntax.InternalSyntax.ConstructorDeclarationSyntax GenerateConstructorDeclaration()
+            => InternalSyntaxFactory.ConstructorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Identifier("Identifier"), GenerateParameterList(), null, null, null, null);
+        
+        private static Syntax.InternalSyntax.ConstructorInitializerSyntax GenerateConstructorInitializer()
+            => InternalSyntaxFactory.ConstructorInitializer(SyntaxKind.BaseConstructorInitializer, InternalSyntaxFactory.Token(SyntaxKind.ColonToken), InternalSyntaxFactory.Token(SyntaxKind.BaseKeyword), GenerateArgumentList());
+        
+        private static Syntax.InternalSyntax.DestructorDeclarationSyntax GenerateDestructorDeclaration()
+            => InternalSyntaxFactory.DestructorDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.TildeToken), InternalSyntaxFactory.Identifier("Identifier"), GenerateParameterList(), null, null, null);
+        
+        private static Syntax.InternalSyntax.PropertyDeclarationSyntax GeneratePropertyDeclaration()
+            => InternalSyntaxFactory.PropertyDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, InternalSyntaxFactory.Identifier("Identifier"), null, null, null, null);
+        
+        private static Syntax.InternalSyntax.ArrowExpressionClauseSyntax GenerateArrowExpressionClause()
+            => InternalSyntaxFactory.ArrowExpressionClause(InternalSyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.EventDeclarationSyntax GenerateEventDeclaration()
+            => InternalSyntaxFactory.EventDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateIdentifierName(), null, InternalSyntaxFactory.Identifier("Identifier"), null, null);
+        
+        private static Syntax.InternalSyntax.IndexerDeclarationSyntax GenerateIndexerDeclaration()
+            => InternalSyntaxFactory.IndexerDeclaration(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), GenerateIdentifierName(), null, InternalSyntaxFactory.Token(SyntaxKind.ThisKeyword), GenerateBracketedParameterList(), null, null, null);
+        
+        private static Syntax.InternalSyntax.AccessorListSyntax GenerateAccessorList()
+            => InternalSyntaxFactory.AccessorList(InternalSyntaxFactory.Token(SyntaxKind.OpenBraceToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AccessorDeclarationSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static Syntax.InternalSyntax.AccessorDeclarationSyntax GenerateAccessorDeclaration()
+            => InternalSyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.GetKeyword), null, null, null);
+        
+        private static Syntax.InternalSyntax.ParameterListSyntax GenerateParameterList()
+            => InternalSyntaxFactory.ParameterList(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ParameterSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.BracketedParameterListSyntax GenerateBracketedParameterList()
+            => InternalSyntaxFactory.BracketedParameterList(InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ParameterSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+        
+        private static Syntax.InternalSyntax.ParameterSyntax GenerateParameter()
+            => InternalSyntaxFactory.Parameter(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), null, InternalSyntaxFactory.Identifier("Identifier"), null);
+        
+        private static Syntax.InternalSyntax.IncompleteMemberSyntax GenerateIncompleteMember()
+            => InternalSyntaxFactory.IncompleteMember(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.AttributeListSyntax>(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), null);
+        
+        private static Syntax.InternalSyntax.SkippedTokensTriviaSyntax GenerateSkippedTokensTrivia()
+            => InternalSyntaxFactory.SkippedTokensTrivia(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>());
+        
+        private static Syntax.InternalSyntax.DocumentationCommentTriviaSyntax GenerateDocumentationCommentTrivia()
+            => InternalSyntaxFactory.DocumentationCommentTrivia(SyntaxKind.SingleLineDocumentationCommentTrivia, new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.XmlNodeSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.EndOfDocumentationCommentToken));
+        
+        private static Syntax.InternalSyntax.TypeCrefSyntax GenerateTypeCref()
+            => InternalSyntaxFactory.TypeCref(GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.QualifiedCrefSyntax GenerateQualifiedCref()
+            => InternalSyntaxFactory.QualifiedCref(GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.DotToken), GenerateNameMemberCref());
+        
+        private static Syntax.InternalSyntax.NameMemberCrefSyntax GenerateNameMemberCref()
+            => InternalSyntaxFactory.NameMemberCref(GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.IndexerMemberCrefSyntax GenerateIndexerMemberCref()
+            => InternalSyntaxFactory.IndexerMemberCref(InternalSyntaxFactory.Token(SyntaxKind.ThisKeyword), null);
+        
+        private static Syntax.InternalSyntax.OperatorMemberCrefSyntax GenerateOperatorMemberCref()
+            => InternalSyntaxFactory.OperatorMemberCref(InternalSyntaxFactory.Token(SyntaxKind.OperatorKeyword), InternalSyntaxFactory.Token(SyntaxKind.PlusToken), null);
+        
+        private static Syntax.InternalSyntax.ConversionOperatorMemberCrefSyntax GenerateConversionOperatorMemberCref()
+            => InternalSyntaxFactory.ConversionOperatorMemberCref(InternalSyntaxFactory.Token(SyntaxKind.ImplicitKeyword), InternalSyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), null);
+        
+        private static Syntax.InternalSyntax.CrefParameterListSyntax GenerateCrefParameterList()
+            => InternalSyntaxFactory.CrefParameterList(InternalSyntaxFactory.Token(SyntaxKind.OpenParenToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.CrefParameterSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static Syntax.InternalSyntax.CrefBracketedParameterListSyntax GenerateCrefBracketedParameterList()
+            => InternalSyntaxFactory.CrefBracketedParameterList(InternalSyntaxFactory.Token(SyntaxKind.OpenBracketToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.CrefParameterSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+        
+        private static Syntax.InternalSyntax.CrefParameterSyntax GenerateCrefParameter()
+            => InternalSyntaxFactory.CrefParameter(null, GenerateIdentifierName());
+        
+        private static Syntax.InternalSyntax.XmlElementSyntax GenerateXmlElement()
+            => InternalSyntaxFactory.XmlElement(GenerateXmlElementStartTag(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.XmlNodeSyntax>(), GenerateXmlElementEndTag());
+        
+        private static Syntax.InternalSyntax.XmlElementStartTagSyntax GenerateXmlElementStartTag()
+            => InternalSyntaxFactory.XmlElementStartTag(InternalSyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.XmlAttributeSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.GreaterThanToken));
+        
+        private static Syntax.InternalSyntax.XmlElementEndTagSyntax GenerateXmlElementEndTag()
+            => InternalSyntaxFactory.XmlElementEndTag(InternalSyntaxFactory.Token(SyntaxKind.LessThanSlashToken), GenerateXmlName(), InternalSyntaxFactory.Token(SyntaxKind.GreaterThanToken));
+        
+        private static Syntax.InternalSyntax.XmlEmptyElementSyntax GenerateXmlEmptyElement()
+            => InternalSyntaxFactory.XmlEmptyElement(InternalSyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.XmlAttributeSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.SlashGreaterThanToken));
+        
+        private static Syntax.InternalSyntax.XmlNameSyntax GenerateXmlName()
+            => InternalSyntaxFactory.XmlName(null, InternalSyntaxFactory.Identifier("LocalName"));
+        
+        private static Syntax.InternalSyntax.XmlPrefixSyntax GenerateXmlPrefix()
+            => InternalSyntaxFactory.XmlPrefix(InternalSyntaxFactory.Identifier("Prefix"), InternalSyntaxFactory.Token(SyntaxKind.ColonToken));
+        
+        private static Syntax.InternalSyntax.XmlTextAttributeSyntax GenerateXmlTextAttribute()
+            => InternalSyntaxFactory.XmlTextAttribute(GenerateXmlName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
+        
+        private static Syntax.InternalSyntax.XmlCrefAttributeSyntax GenerateXmlCrefAttribute()
+            => InternalSyntaxFactory.XmlCrefAttribute(GenerateXmlName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateTypeCref(), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
+        
+        private static Syntax.InternalSyntax.XmlNameAttributeSyntax GenerateXmlNameAttribute()
+            => InternalSyntaxFactory.XmlNameAttribute(GenerateXmlName(), InternalSyntaxFactory.Token(SyntaxKind.EqualsToken), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
+        
+        private static Syntax.InternalSyntax.XmlTextSyntax GenerateXmlText()
+            => InternalSyntaxFactory.XmlText(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>());
+        
+        private static Syntax.InternalSyntax.XmlCDataSectionSyntax GenerateXmlCDataSection()
+            => InternalSyntaxFactory.XmlCDataSection(InternalSyntaxFactory.Token(SyntaxKind.XmlCDataStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.XmlCDataEndToken));
+        
+        private static Syntax.InternalSyntax.XmlProcessingInstructionSyntax GenerateXmlProcessingInstruction()
+            => InternalSyntaxFactory.XmlProcessingInstruction(InternalSyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionStartToken), GenerateXmlName(), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionEndToken));
+        
+        private static Syntax.InternalSyntax.XmlCommentSyntax GenerateXmlComment()
+            => InternalSyntaxFactory.XmlComment(InternalSyntaxFactory.Token(SyntaxKind.XmlCommentStartToken), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<Syntax.InternalSyntax.SyntaxToken>(), InternalSyntaxFactory.Token(SyntaxKind.XmlCommentEndToken));
+        
+        private static Syntax.InternalSyntax.IfDirectiveTriviaSyntax GenerateIfDirectiveTrivia()
+            => InternalSyntaxFactory.IfDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.IfKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
+        
+        private static Syntax.InternalSyntax.ElifDirectiveTriviaSyntax GenerateElifDirectiveTrivia()
+            => InternalSyntaxFactory.ElifDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.ElifKeyword), GenerateIdentifierName(), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
+        
+        private static Syntax.InternalSyntax.ElseDirectiveTriviaSyntax GenerateElseDirectiveTrivia()
+            => InternalSyntaxFactory.ElseDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.ElseKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool());
+        
+        private static Syntax.InternalSyntax.EndIfDirectiveTriviaSyntax GenerateEndIfDirectiveTrivia()
+            => InternalSyntaxFactory.EndIfDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.EndIfKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.RegionDirectiveTriviaSyntax GenerateRegionDirectiveTrivia()
+            => InternalSyntaxFactory.RegionDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.RegionKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.EndRegionDirectiveTriviaSyntax GenerateEndRegionDirectiveTrivia()
+            => InternalSyntaxFactory.EndRegionDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.EndRegionKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.ErrorDirectiveTriviaSyntax GenerateErrorDirectiveTrivia()
+            => InternalSyntaxFactory.ErrorDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.ErrorKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.WarningDirectiveTriviaSyntax GenerateWarningDirectiveTrivia()
+            => InternalSyntaxFactory.WarningDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.WarningKeyword), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.BadDirectiveTriviaSyntax GenerateBadDirectiveTrivia()
+            => InternalSyntaxFactory.BadDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Identifier("Identifier"), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.DefineDirectiveTriviaSyntax GenerateDefineDirectiveTrivia()
+            => InternalSyntaxFactory.DefineDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.DefineKeyword), InternalSyntaxFactory.Identifier("Name"), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.UndefDirectiveTriviaSyntax GenerateUndefDirectiveTrivia()
+            => InternalSyntaxFactory.UndefDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.UndefKeyword), InternalSyntaxFactory.Identifier("Name"), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.LineDirectiveTriviaSyntax GenerateLineDirectiveTrivia()
+            => InternalSyntaxFactory.LineDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.LineKeyword), InternalSyntaxFactory.Literal(null, "1", 1, null), null, InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.PragmaWarningDirectiveTriviaSyntax GeneratePragmaWarningDirectiveTrivia()
+            => InternalSyntaxFactory.PragmaWarningDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.PragmaKeyword), InternalSyntaxFactory.Token(SyntaxKind.WarningKeyword), InternalSyntaxFactory.Token(SyntaxKind.DisableKeyword), new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<Syntax.InternalSyntax.ExpressionSyntax>(), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.PragmaChecksumDirectiveTriviaSyntax GeneratePragmaChecksumDirectiveTrivia()
+            => InternalSyntaxFactory.PragmaChecksumDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.PragmaKeyword), InternalSyntaxFactory.Token(SyntaxKind.ChecksumKeyword), InternalSyntaxFactory.Literal(null, "string", "string", null), InternalSyntaxFactory.Literal(null, "string", "string", null), InternalSyntaxFactory.Literal(null, "string", "string", null), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.ReferenceDirectiveTriviaSyntax GenerateReferenceDirectiveTrivia()
+            => InternalSyntaxFactory.ReferenceDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.ReferenceKeyword), InternalSyntaxFactory.Literal(null, "string", "string", null), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.LoadDirectiveTriviaSyntax GenerateLoadDirectiveTrivia()
+            => InternalSyntaxFactory.LoadDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.LoadKeyword), InternalSyntaxFactory.Literal(null, "string", "string", null), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.ShebangDirectiveTriviaSyntax GenerateShebangDirectiveTrivia()
+            => InternalSyntaxFactory.ShebangDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.ExclamationToken), InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
+        
+        private static Syntax.InternalSyntax.NullableDirectiveTriviaSyntax GenerateNullableDirectiveTrivia()
+            => InternalSyntaxFactory.NullableDirectiveTrivia(InternalSyntaxFactory.Token(SyntaxKind.HashToken), InternalSyntaxFactory.Token(SyntaxKind.NullableKeyword), InternalSyntaxFactory.Token(SyntaxKind.EnableKeyword), null, InternalSyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         #endregion Green Generators
         
         #region Green Factory and Property Tests
@@ -1085,7 +697,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTypeArgumentList();
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind);
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1119,7 +731,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArrayType();
             
             Assert.NotNull(node.ElementType);
-            Assert.NotNull(node.RankSpecifiers);
+            Assert.Equal(default, node.RankSpecifiers);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1130,9 +742,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArrayRankSpecifier();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
-            Assert.NotNull(node.Sizes);
+            Assert.Equal(default, node.Sizes);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
-            Assert.Null(node.QuestionToken);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1165,7 +776,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTupleType();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Elements);
+            Assert.Equal(default, node.Elements);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1222,7 +833,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTupleExpression();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1517,7 +1128,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArgumentList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1529,7 +1140,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBracketedArgumentList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1590,7 +1201,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Null(node.AsyncKeyword);
             Assert.Equal(SyntaxKind.DelegateKeyword, node.DelegateKeyword.Kind);
             Assert.Null(node.ParameterList);
-            Assert.NotNull(node.Body);
+            Assert.NotNull(node.Block);
+            Assert.Null(node.ExpressionBody);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1603,7 +1215,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Null(node.AsyncKeyword);
             Assert.NotNull(node.Parameter);
             Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.ArrowToken.Kind);
-            Assert.NotNull(node.Body);
+            Assert.Null(node.Block);
+            Assert.Null(node.ExpressionBody);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1627,7 +1240,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Null(node.AsyncKeyword);
             Assert.NotNull(node.ParameterList);
             Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.ArrowToken.Kind);
-            Assert.NotNull(node.Body);
+            Assert.Null(node.Block);
+            Assert.Null(node.ExpressionBody);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1638,7 +1252,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateInitializerExpression();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Expressions);
+            Assert.Equal(default, node.Expressions);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1675,7 +1289,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.NewKeyword, node.NewKeyword.Kind);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Initializers);
+            Assert.Equal(default, node.Initializers);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1700,7 +1314,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.NewKeyword, node.NewKeyword.Kind);
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
-            Assert.NotNull(node.Commas);
+            Assert.Equal(default, node.Commas);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
             Assert.NotNull(node.Initializer);
             
@@ -1748,7 +1362,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateQueryBody();
             
-            Assert.NotNull(node.Clauses);
+            Assert.Equal(default, node.Clauses);
             Assert.NotNull(node.SelectOrGroup);
             Assert.Null(node.Continuation);
             
@@ -1829,7 +1443,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateOrderByClause();
             
             Assert.Equal(SyntaxKind.OrderByKeyword, node.OrderByKeyword.Kind);
-            Assert.NotNull(node.Orderings);
+            Assert.Equal(default, node.Orderings);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -1897,7 +1511,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateInterpolatedStringExpression();
             
             Assert.Equal(SyntaxKind.InterpolatedStringStartToken, node.StringStartToken.Kind);
-            Assert.NotNull(node.Contents);
+            Assert.Equal(default, node.Contents);
             Assert.Equal(SyntaxKind.InterpolatedStringEndToken, node.StringEndToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -1938,12 +1552,81 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestDiscardPatternFactoryAndProperties()
+        {
+            var node = GenerateDiscardPattern();
+            
+            Assert.Equal(SyntaxKind.UnderscoreToken, node.UnderscoreToken.Kind);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
         public void TestDeclarationPatternFactoryAndProperties()
         {
             var node = GenerateDeclarationPattern();
             
             Assert.NotNull(node.Type);
             Assert.NotNull(node.Designation);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestVarPatternFactoryAndProperties()
+        {
+            var node = GenerateVarPattern();
+            
+            Assert.Equal(SyntaxKind.VarKeyword, node.VarKeyword.Kind);
+            Assert.NotNull(node.Designation);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestRecursivePatternFactoryAndProperties()
+        {
+            var node = GenerateRecursivePattern();
+            
+            Assert.Null(node.Type);
+            Assert.Null(node.PositionalPatternClause);
+            Assert.Null(node.PropertyPatternClause);
+            Assert.Null(node.Designation);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseFactoryAndProperties()
+        {
+            var node = GeneratePositionalPatternClause();
+            
+            Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
+            Assert.Equal(default, node.Subpatterns);
+            Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseFactoryAndProperties()
+        {
+            var node = GeneratePropertyPatternClause();
+            
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
+            Assert.Equal(default, node.Subpatterns);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestSubpatternFactoryAndProperties()
+        {
+            var node = GenerateSubpattern();
+            
+            Assert.Null(node.NameColon);
+            Assert.NotNull(node.Pattern);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -2009,6 +1692,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateGlobalStatement();
             
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Statement);
             
             AttachAndCheckDiagnostics(node);
@@ -2020,7 +1705,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBlock();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Statements);
+            Assert.Equal(default, node.Statements);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2031,12 +1716,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateLocalFunctionStatement();
             
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
             Assert.Null(node.SemicolonToken);
@@ -2049,7 +1734,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateLocalDeclarationStatement();
             
-            Assert.NotNull(node.Modifiers);
+            Assert.Null(node.AwaitKeyword);
+            Assert.Null(node.UsingKeyword);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind);
             
@@ -2062,7 +1749,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateVariableDeclaration();
             
             Assert.NotNull(node.Type);
-            Assert.NotNull(node.Variables);
+            Assert.Equal(default, node.Variables);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -2116,7 +1803,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateParenthesizedVariableDesignation();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Variables);
+            Assert.Equal(default, node.Variables);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2265,11 +1952,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.ForKeyword, node.ForKeyword.Kind);
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
             Assert.Null(node.Declaration);
-            Assert.NotNull(node.Initializers);
+            Assert.Equal(default, node.Initializers);
             Assert.Equal(SyntaxKind.SemicolonToken, node.FirstSemicolonToken.Kind);
             Assert.Null(node.Condition);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SecondSemicolonToken.Kind);
-            Assert.NotNull(node.Incrementors);
+            Assert.Equal(default, node.Incrementors);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             Assert.NotNull(node.Statement);
             
@@ -2409,11 +2096,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateSwitchStatement();
             
             Assert.Equal(SyntaxKind.SwitchKeyword, node.SwitchKeyword.Kind);
-            Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
+            Assert.Null(node.OpenParenToken);
             Assert.NotNull(node.Expression);
-            Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
+            Assert.Null(node.CloseParenToken);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Sections);
+            Assert.Equal(default, node.Sections);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2424,8 +2111,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateSwitchSection();
             
-            Assert.NotNull(node.Labels);
-            Assert.NotNull(node.Statements);
+            Assert.Equal(default, node.Labels);
+            Assert.Equal(default, node.Statements);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -2467,13 +2154,40 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestSwitchExpressionFactoryAndProperties()
+        {
+            var node = GenerateSwitchExpression();
+            
+            Assert.NotNull(node.GoverningExpression);
+            Assert.Equal(SyntaxKind.SwitchKeyword, node.SwitchKeyword.Kind);
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
+            Assert.Equal(default, node.Arms);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmFactoryAndProperties()
+        {
+            var node = GenerateSwitchExpressionArm();
+            
+            Assert.NotNull(node.Pattern);
+            Assert.Null(node.WhenClause);
+            Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.EqualsGreaterThanToken.Kind);
+            Assert.NotNull(node.Expression);
+            
+            AttachAndCheckDiagnostics(node);
+        }
+        
+        [Fact]
         public void TestTryStatementFactoryAndProperties()
         {
             var node = GenerateTryStatement();
             
             Assert.Equal(SyntaxKind.TryKeyword, node.TryKeyword.Kind);
             Assert.NotNull(node.Block);
-            Assert.NotNull(node.Catches);
+            Assert.Equal(default, node.Catches);
             Assert.Null(node.Finally);
             
             AttachAndCheckDiagnostics(node);
@@ -2534,10 +2248,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateCompilationUnit();
             
-            Assert.NotNull(node.Externs);
-            Assert.NotNull(node.Usings);
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Externs);
+            Assert.Equal(default, node.Usings);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.EndOfFileToken, node.EndOfFileToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2575,12 +2289,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateNamespaceDeclaration();
             
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.NamespaceKeyword, node.NamespaceKeyword.Kind);
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Externs);
-            Assert.NotNull(node.Usings);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Externs);
+            Assert.Equal(default, node.Usings);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             Assert.Null(node.SemicolonToken);
             
@@ -2594,7 +2310,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
             Assert.Null(node.Target);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2628,7 +2344,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateAttributeArgumentList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2663,7 +2379,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTypeParameterList();
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind);
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2674,7 +2390,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateTypeParameter();
             
-            Assert.NotNull(node.AttributeLists);
+            Assert.Equal(default, node.AttributeLists);
             Assert.Null(node.VarianceKeyword);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             
@@ -2686,15 +2402,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateClassDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.ClassKeyword, node.Keyword.Kind);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             Assert.Null(node.SemicolonToken);
             
@@ -2706,15 +2422,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateStructDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.StructKeyword, node.Keyword.Kind);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             Assert.Null(node.SemicolonToken);
             
@@ -2726,15 +2442,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateInterfaceDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.InterfaceKeyword, node.Keyword.Kind);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             Assert.Null(node.SemicolonToken);
             
@@ -2746,13 +2462,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEnumDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EnumKeyword, node.EnumKeyword.Kind);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.BaseList);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             Assert.Null(node.SemicolonToken);
             
@@ -2764,14 +2480,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDelegateDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.DelegateKeyword, node.DelegateKeyword.Kind);
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -2782,7 +2498,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEnumMemberDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.EqualsValue);
             
@@ -2795,7 +2512,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBaseList();
             
             Assert.Equal(SyntaxKind.ColonToken, node.ColonToken.Kind);
-            Assert.NotNull(node.Types);
+            Assert.Equal(default, node.Types);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -2818,7 +2535,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.WhereKeyword, node.WhereKeyword.Kind);
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.ColonToken, node.ColonToken.Kind);
-            Assert.NotNull(node.Constraints);
+            Assert.Equal(default, node.Constraints);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -2861,8 +2578,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateFieldDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind);
             
@@ -2874,8 +2591,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEventFieldDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EventKeyword, node.EventKeyword.Kind);
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind);
@@ -2899,14 +2616,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateMethodDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
             Assert.Null(node.SemicolonToken);
@@ -2919,8 +2636,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateOperatorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.OperatorKeyword, node.OperatorKeyword.Kind);
             Assert.Equal(SyntaxKind.PlusToken, node.OperatorToken.Kind);
@@ -2937,8 +2654,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateConversionOperatorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.ImplicitKeyword, node.ImplicitOrExplicitKeyword.Kind);
             Assert.Equal(SyntaxKind.OperatorKeyword, node.OperatorKeyword.Kind);
             Assert.NotNull(node.Type);
@@ -2955,8 +2672,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateConstructorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.NotNull(node.ParameterList);
             Assert.Null(node.Initializer);
@@ -2984,8 +2701,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDestructorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.TildeToken, node.TildeToken.Kind);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.NotNull(node.ParameterList);
@@ -3001,8 +2718,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GeneratePropertyDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
@@ -3030,13 +2747,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEventDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EventKeyword, node.EventKeyword.Kind);
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
-            Assert.NotNull(node.AccessorList);
+            Assert.Null(node.AccessorList);
+            Assert.Null(node.SemicolonToken);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -3046,8 +2764,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateIndexerDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.ThisKeyword, node.ThisKeyword.Kind);
@@ -3065,7 +2783,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateAccessorList();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind);
-            Assert.NotNull(node.Accessors);
+            Assert.Equal(default, node.Accessors);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3076,8 +2794,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateAccessorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.GetKeyword, node.Keyword.Kind);
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
@@ -3092,7 +2810,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateParameterList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3104,7 +2822,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBracketedParameterList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3115,8 +2833,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateParameter();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Null(node.Type);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind);
             Assert.Null(node.Default);
@@ -3129,8 +2847,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateIncompleteMember();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Null(node.Type);
             
             AttachAndCheckDiagnostics(node);
@@ -3141,7 +2859,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateSkippedTokensTrivia();
             
-            Assert.NotNull(node.Tokens);
+            Assert.Equal(default, node.Tokens);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -3151,7 +2869,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDocumentationCommentTrivia();
             
-            Assert.NotNull(node.Content);
+            Assert.Equal(default, node.Content);
             Assert.Equal(SyntaxKind.EndOfDocumentationCommentToken, node.EndOfComment.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3232,7 +2950,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateCrefParameterList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind);
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3244,7 +2962,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateCrefBracketedParameterList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind);
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3267,7 +2985,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlElement();
             
             Assert.NotNull(node.StartTag);
-            Assert.NotNull(node.Content);
+            Assert.Equal(default, node.Content);
             Assert.NotNull(node.EndTag);
             
             AttachAndCheckDiagnostics(node);
@@ -3280,7 +2998,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind);
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3305,7 +3023,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind);
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.SlashGreaterThanToken, node.SlashGreaterThanToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3341,7 +3059,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.EqualsToken, node.EqualsToken.Kind);
             Assert.Equal(SyntaxKind.SingleQuoteToken, node.StartQuoteToken.Kind);
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.SingleQuoteToken, node.EndQuoteToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3380,7 +3098,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateXmlText();
             
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             
             AttachAndCheckDiagnostics(node);
         }
@@ -3391,7 +3109,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlCDataSection();
             
             Assert.Equal(SyntaxKind.XmlCDataStartToken, node.StartCDataToken.Kind);
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlCDataEndToken, node.EndCDataToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3404,7 +3122,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.XmlProcessingInstructionStartToken, node.StartProcessingInstructionToken.Kind);
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlProcessingInstructionEndToken, node.EndProcessingInstructionToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3416,7 +3134,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlComment();
             
             Assert.Equal(SyntaxKind.XmlCommentStartToken, node.LessThanExclamationMinusMinusToken.Kind);
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlCommentEndToken, node.MinusMinusGreaterThanToken.Kind);
             
             AttachAndCheckDiagnostics(node);
@@ -3598,7 +3316,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.PragmaKeyword, node.PragmaKeyword.Kind);
             Assert.Equal(SyntaxKind.WarningKeyword, node.WarningKeyword.Kind);
             Assert.Equal(SyntaxKind.DisableKeyword, node.DisableOrRestoreKeyword.Kind);
-            Assert.NotNull(node.ErrorCodes);
+            Assert.Equal(default, node.ErrorCodes);
             Assert.Equal(SyntaxKind.EndOfDirectiveToken, node.EndOfDirectiveToken.Kind);
             Assert.Equal(new bool(), node.IsActive);
             
@@ -3671,6 +3389,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.HashToken, node.HashToken.Kind);
             Assert.Equal(SyntaxKind.NullableKeyword, node.NullableKeyword.Kind);
             Assert.Equal(SyntaxKind.EnableKeyword, node.SettingToken.Kind);
+            Assert.Null(node.TargetToken);
             Assert.Equal(SyntaxKind.EndOfDirectiveToken, node.EndOfDirectiveToken.Kind);
             Assert.Equal(new bool(), node.IsActive);
             
@@ -5630,6 +5349,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestDiscardPatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateDiscardPattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestDiscardPatternIdentityRewriter()
+        {
+            var oldNode = GenerateDiscardPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
         public void TestDeclarationPatternTokenDeleteRewriter()
         {
             var oldNode = GenerateDeclarationPattern();
@@ -5649,6 +5394,136 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestDeclarationPatternIdentityRewriter()
         {
             var oldNode = GenerateDeclarationPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestVarPatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateVarPattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestVarPatternIdentityRewriter()
+        {
+            var oldNode = GenerateVarPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestRecursivePatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateRecursivePattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestRecursivePatternIdentityRewriter()
+        {
+            var oldNode = GenerateRecursivePattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseTokenDeleteRewriter()
+        {
+            var oldNode = GeneratePositionalPatternClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseIdentityRewriter()
+        {
+            var oldNode = GeneratePositionalPatternClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseTokenDeleteRewriter()
+        {
+            var oldNode = GeneratePropertyPatternClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseIdentityRewriter()
+        {
+            var oldNode = GeneratePropertyPatternClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSubpatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSubpattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSubpatternIdentityRewriter()
+        {
+            var oldNode = GenerateSubpattern();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -6715,6 +6590,58 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestDefaultSwitchLabelIdentityRewriter()
         {
             var oldNode = GenerateDefaultSwitchLabel();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSwitchExpression();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionIdentityRewriter()
+        {
+            var oldNode = GenerateSwitchExpression();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSwitchExpressionArm();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmIdentityRewriter()
+        {
+            var oldNode = GenerateSwitchExpressionArm();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -9067,1039 +8994,649 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
     {
         #region Red Generators
         private static IdentifierNameSyntax GenerateIdentifierName()
-        {
-            return SyntaxFactory.IdentifierName(SyntaxFactory.Identifier("Identifier"));
-        }
+            => SyntaxFactory.IdentifierName(SyntaxFactory.Identifier("Identifier"));
         
         private static QualifiedNameSyntax GenerateQualifiedName()
-        {
-            return SyntaxFactory.QualifiedName(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.QualifiedName(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
         
         private static GenericNameSyntax GenerateGenericName()
-        {
-            return SyntaxFactory.GenericName(SyntaxFactory.Identifier("Identifier"), GenerateTypeArgumentList());
-        }
+            => SyntaxFactory.GenericName(SyntaxFactory.Identifier("Identifier"), GenerateTypeArgumentList());
         
         private static TypeArgumentListSyntax GenerateTypeArgumentList()
-        {
-            return SyntaxFactory.TypeArgumentList(SyntaxFactory.Token(SyntaxKind.LessThanToken), new SeparatedSyntaxList<TypeSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
+            => SyntaxFactory.TypeArgumentList(SyntaxFactory.Token(SyntaxKind.LessThanToken), new SeparatedSyntaxList<TypeSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
         
         private static AliasQualifiedNameSyntax GenerateAliasQualifiedName()
-        {
-            return SyntaxFactory.AliasQualifiedName(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonColonToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.AliasQualifiedName(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonColonToken), GenerateIdentifierName());
         
         private static PredefinedTypeSyntax GeneratePredefinedType()
-        {
-            return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword));
-        }
+            => SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword));
         
         private static ArrayTypeSyntax GenerateArrayType()
-        {
-            return SyntaxFactory.ArrayType(GenerateIdentifierName(), new SyntaxList<ArrayRankSpecifierSyntax>());
-        }
+            => SyntaxFactory.ArrayType(GenerateIdentifierName(), new SyntaxList<ArrayRankSpecifierSyntax>());
         
         private static ArrayRankSpecifierSyntax GenerateArrayRankSpecifier()
-        {
-            return SyntaxFactory.ArrayRankSpecifier(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.ArrayRankSpecifier(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
         
         private static PointerTypeSyntax GeneratePointerType()
-        {
-            return SyntaxFactory.PointerType(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.AsteriskToken));
-        }
+            => SyntaxFactory.PointerType(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.AsteriskToken));
         
         private static NullableTypeSyntax GenerateNullableType()
-        {
-            return SyntaxFactory.NullableType(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken));
-        }
+            => SyntaxFactory.NullableType(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken));
         
         private static TupleTypeSyntax GenerateTupleType()
-        {
-            return SyntaxFactory.TupleType(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<TupleElementSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.TupleType(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<TupleElementSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static TupleElementSyntax GenerateTupleElement()
-        {
-            return SyntaxFactory.TupleElement(GenerateIdentifierName(), default(SyntaxToken));
-        }
+            => SyntaxFactory.TupleElement(GenerateIdentifierName(), default(SyntaxToken));
         
         private static OmittedTypeArgumentSyntax GenerateOmittedTypeArgument()
-        {
-            return SyntaxFactory.OmittedTypeArgument(SyntaxFactory.Token(SyntaxKind.OmittedTypeArgumentToken));
-        }
+            => SyntaxFactory.OmittedTypeArgument(SyntaxFactory.Token(SyntaxKind.OmittedTypeArgumentToken));
         
         private static RefTypeSyntax GenerateRefType()
-        {
-            return SyntaxFactory.RefType(SyntaxFactory.Token(SyntaxKind.RefKeyword), default(SyntaxToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.RefType(SyntaxFactory.Token(SyntaxKind.RefKeyword), default(SyntaxToken), GenerateIdentifierName());
         
         private static ParenthesizedExpressionSyntax GenerateParenthesizedExpression()
-        {
-            return SyntaxFactory.ParenthesizedExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.ParenthesizedExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static TupleExpressionSyntax GenerateTupleExpression()
-        {
-            return SyntaxFactory.TupleExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.TupleExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static PrefixUnaryExpressionSyntax GeneratePrefixUnaryExpression()
-        {
-            return SyntaxFactory.PrefixUnaryExpression(SyntaxKind.UnaryPlusExpression, SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.PrefixUnaryExpression(SyntaxKind.UnaryPlusExpression, SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
         
         private static AwaitExpressionSyntax GenerateAwaitExpression()
-        {
-            return SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxKind.AwaitKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxKind.AwaitKeyword), GenerateIdentifierName());
         
         private static PostfixUnaryExpressionSyntax GeneratePostfixUnaryExpression()
-        {
-            return SyntaxFactory.PostfixUnaryExpression(SyntaxKind.PostIncrementExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.PlusPlusToken));
-        }
+            => SyntaxFactory.PostfixUnaryExpression(SyntaxKind.PostIncrementExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.PlusPlusToken));
         
         private static MemberAccessExpressionSyntax GenerateMemberAccessExpression()
-        {
-            return SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
         
         private static ConditionalAccessExpressionSyntax GenerateConditionalAccessExpression()
-        {
-            return SyntaxFactory.ConditionalAccessExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.ConditionalAccessExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName());
         
         private static MemberBindingExpressionSyntax GenerateMemberBindingExpression()
-        {
-            return SyntaxFactory.MemberBindingExpression(SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.MemberBindingExpression(SyntaxFactory.Token(SyntaxKind.DotToken), GenerateIdentifierName());
         
         private static ElementBindingExpressionSyntax GenerateElementBindingExpression()
-        {
-            return SyntaxFactory.ElementBindingExpression(GenerateBracketedArgumentList());
-        }
+            => SyntaxFactory.ElementBindingExpression(GenerateBracketedArgumentList());
         
         private static RangeExpressionSyntax GenerateRangeExpression()
-        {
-            return SyntaxFactory.RangeExpression(default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.DotDotToken), default(ExpressionSyntax));
-        }
+            => SyntaxFactory.RangeExpression(default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.DotDotToken), default(ExpressionSyntax));
         
         private static ImplicitElementAccessSyntax GenerateImplicitElementAccess()
-        {
-            return SyntaxFactory.ImplicitElementAccess(GenerateBracketedArgumentList());
-        }
+            => SyntaxFactory.ImplicitElementAccess(GenerateBracketedArgumentList());
         
         private static BinaryExpressionSyntax GenerateBinaryExpression()
-        {
-            return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateIdentifierName());
         
         private static AssignmentExpressionSyntax GenerateAssignmentExpression()
-        {
-            return SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
         
         private static ConditionalExpressionSyntax GenerateConditionalExpression()
-        {
-            return SyntaxFactory.ConditionalExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.ConditionalExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.QuestionToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateIdentifierName());
         
         private static ThisExpressionSyntax GenerateThisExpression()
-        {
-            return SyntaxFactory.ThisExpression(SyntaxFactory.Token(SyntaxKind.ThisKeyword));
-        }
+            => SyntaxFactory.ThisExpression(SyntaxFactory.Token(SyntaxKind.ThisKeyword));
         
         private static BaseExpressionSyntax GenerateBaseExpression()
-        {
-            return SyntaxFactory.BaseExpression(SyntaxFactory.Token(SyntaxKind.BaseKeyword));
-        }
+            => SyntaxFactory.BaseExpression(SyntaxFactory.Token(SyntaxKind.BaseKeyword));
         
         private static LiteralExpressionSyntax GenerateLiteralExpression()
-        {
-            return SyntaxFactory.LiteralExpression(SyntaxKind.ArgListExpression, SyntaxFactory.Token(SyntaxKind.ArgListKeyword));
-        }
+            => SyntaxFactory.LiteralExpression(SyntaxKind.ArgListExpression, SyntaxFactory.Token(SyntaxKind.ArgListKeyword));
         
         private static MakeRefExpressionSyntax GenerateMakeRefExpression()
-        {
-            return SyntaxFactory.MakeRefExpression(SyntaxFactory.Token(SyntaxKind.MakeRefKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.MakeRefExpression(SyntaxFactory.Token(SyntaxKind.MakeRefKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static RefTypeExpressionSyntax GenerateRefTypeExpression()
-        {
-            return SyntaxFactory.RefTypeExpression(SyntaxFactory.Token(SyntaxKind.RefTypeKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.RefTypeExpression(SyntaxFactory.Token(SyntaxKind.RefTypeKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static RefValueExpressionSyntax GenerateRefValueExpression()
-        {
-            return SyntaxFactory.RefValueExpression(SyntaxFactory.Token(SyntaxKind.RefValueKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CommaToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.RefValueExpression(SyntaxFactory.Token(SyntaxKind.RefValueKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CommaToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static CheckedExpressionSyntax GenerateCheckedExpression()
-        {
-            return SyntaxFactory.CheckedExpression(SyntaxKind.CheckedExpression, SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.CheckedExpression(SyntaxKind.CheckedExpression, SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static DefaultExpressionSyntax GenerateDefaultExpression()
-        {
-            return SyntaxFactory.DefaultExpression(SyntaxFactory.Token(SyntaxKind.DefaultKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.DefaultExpression(SyntaxFactory.Token(SyntaxKind.DefaultKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static TypeOfExpressionSyntax GenerateTypeOfExpression()
-        {
-            return SyntaxFactory.TypeOfExpression(SyntaxFactory.Token(SyntaxKind.TypeOfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.TypeOfExpression(SyntaxFactory.Token(SyntaxKind.TypeOfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static SizeOfExpressionSyntax GenerateSizeOfExpression()
-        {
-            return SyntaxFactory.SizeOfExpression(SyntaxFactory.Token(SyntaxKind.SizeOfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.SizeOfExpression(SyntaxFactory.Token(SyntaxKind.SizeOfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static InvocationExpressionSyntax GenerateInvocationExpression()
-        {
-            return SyntaxFactory.InvocationExpression(GenerateIdentifierName(), GenerateArgumentList());
-        }
+            => SyntaxFactory.InvocationExpression(GenerateIdentifierName(), GenerateArgumentList());
         
         private static ElementAccessExpressionSyntax GenerateElementAccessExpression()
-        {
-            return SyntaxFactory.ElementAccessExpression(GenerateIdentifierName(), GenerateBracketedArgumentList());
-        }
+            => SyntaxFactory.ElementAccessExpression(GenerateIdentifierName(), GenerateBracketedArgumentList());
         
         private static ArgumentListSyntax GenerateArgumentList()
-        {
-            return SyntaxFactory.ArgumentList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.ArgumentList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static BracketedArgumentListSyntax GenerateBracketedArgumentList()
-        {
-            return SyntaxFactory.BracketedArgumentList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
+            => SyntaxFactory.BracketedArgumentList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
         
         private static ArgumentSyntax GenerateArgument()
-        {
-            return SyntaxFactory.Argument(default(NameColonSyntax), default(SyntaxToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.Argument(default(NameColonSyntax), default(SyntaxToken), GenerateIdentifierName());
         
         private static NameColonSyntax GenerateNameColon()
-        {
-            return SyntaxFactory.NameColon(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
+            => SyntaxFactory.NameColon(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken));
         
         private static DeclarationExpressionSyntax GenerateDeclarationExpression()
-        {
-            return SyntaxFactory.DeclarationExpression(GenerateIdentifierName(), GenerateSingleVariableDesignation());
-        }
+            => SyntaxFactory.DeclarationExpression(GenerateIdentifierName(), GenerateSingleVariableDesignation());
         
         private static CastExpressionSyntax GenerateCastExpression()
-        {
-            return SyntaxFactory.CastExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.CastExpression(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateIdentifierName());
         
         private static AnonymousMethodExpressionSyntax GenerateAnonymousMethodExpression()
-        {
-            return SyntaxFactory.AnonymousMethodExpression(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.DelegateKeyword), default(ParameterListSyntax), SyntaxFactory.IdentifierName(SyntaxFactory.Identifier("Body")));
-        }
+            => SyntaxFactory.AnonymousMethodExpression(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.DelegateKeyword), default(ParameterListSyntax), GenerateBlock(), default(ExpressionSyntax));
         
         private static SimpleLambdaExpressionSyntax GenerateSimpleLambdaExpression()
-        {
-            return SyntaxFactory.SimpleLambdaExpression(default(SyntaxToken), GenerateParameter(), SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), SyntaxFactory.IdentifierName(SyntaxFactory.Identifier("Body")));
-        }
+            => SyntaxFactory.SimpleLambdaExpression(default(SyntaxToken), GenerateParameter(), SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), default(BlockSyntax), default(ExpressionSyntax));
         
         private static RefExpressionSyntax GenerateRefExpression()
-        {
-            return SyntaxFactory.RefExpression(SyntaxFactory.Token(SyntaxKind.RefKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.RefExpression(SyntaxFactory.Token(SyntaxKind.RefKeyword), GenerateIdentifierName());
         
         private static ParenthesizedLambdaExpressionSyntax GenerateParenthesizedLambdaExpression()
-        {
-            return SyntaxFactory.ParenthesizedLambdaExpression(default(SyntaxToken), GenerateParameterList(), SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), SyntaxFactory.IdentifierName(SyntaxFactory.Identifier("Body")));
-        }
+            => SyntaxFactory.ParenthesizedLambdaExpression(default(SyntaxToken), GenerateParameterList(), SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), default(BlockSyntax), default(ExpressionSyntax));
         
         private static InitializerExpressionSyntax GenerateInitializerExpression()
-        {
-            return SyntaxFactory.InitializerExpression(SyntaxKind.ObjectInitializerExpression, SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.InitializerExpression(SyntaxKind.ObjectInitializerExpression, SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static ObjectCreationExpressionSyntax GenerateObjectCreationExpression()
-        {
-            return SyntaxFactory.ObjectCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateIdentifierName(), default(ArgumentListSyntax), default(InitializerExpressionSyntax));
-        }
+            => SyntaxFactory.ObjectCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateIdentifierName(), default(ArgumentListSyntax), default(InitializerExpressionSyntax));
         
         private static AnonymousObjectMemberDeclaratorSyntax GenerateAnonymousObjectMemberDeclarator()
-        {
-            return SyntaxFactory.AnonymousObjectMemberDeclarator(default(NameEqualsSyntax), GenerateIdentifierName());
-        }
+            => SyntaxFactory.AnonymousObjectMemberDeclarator(default(NameEqualsSyntax), GenerateIdentifierName());
         
         private static AnonymousObjectCreationExpressionSyntax GenerateAnonymousObjectCreationExpression()
-        {
-            return SyntaxFactory.AnonymousObjectCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.AnonymousObjectCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static ArrayCreationExpressionSyntax GenerateArrayCreationExpression()
-        {
-            return SyntaxFactory.ArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateArrayType(), default(InitializerExpressionSyntax));
-        }
+            => SyntaxFactory.ArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), GenerateArrayType(), default(InitializerExpressionSyntax));
         
         private static ImplicitArrayCreationExpressionSyntax GenerateImplicitArrayCreationExpression()
-        {
-            return SyntaxFactory.ImplicitArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
-        }
+            => SyntaxFactory.ImplicitArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
         
         private static StackAllocArrayCreationExpressionSyntax GenerateStackAllocArrayCreationExpression()
-        {
-            return SyntaxFactory.StackAllocArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), GenerateIdentifierName(), default(InitializerExpressionSyntax));
-        }
+            => SyntaxFactory.StackAllocArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), GenerateIdentifierName(), default(InitializerExpressionSyntax));
         
         private static ImplicitStackAllocArrayCreationExpressionSyntax GenerateImplicitStackAllocArrayCreationExpression()
-        {
-            return SyntaxFactory.ImplicitStackAllocArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), SyntaxFactory.Token(SyntaxKind.OpenBracketToken), SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
-        }
+            => SyntaxFactory.ImplicitStackAllocArrayCreationExpression(SyntaxFactory.Token(SyntaxKind.StackAllocKeyword), SyntaxFactory.Token(SyntaxKind.OpenBracketToken), SyntaxFactory.Token(SyntaxKind.CloseBracketToken), GenerateInitializerExpression());
         
         private static QueryExpressionSyntax GenerateQueryExpression()
-        {
-            return SyntaxFactory.QueryExpression(GenerateFromClause(), GenerateQueryBody());
-        }
+            => SyntaxFactory.QueryExpression(GenerateFromClause(), GenerateQueryBody());
         
         private static QueryBodySyntax GenerateQueryBody()
-        {
-            return SyntaxFactory.QueryBody(new SyntaxList<QueryClauseSyntax>(), GenerateSelectClause(), default(QueryContinuationSyntax));
-        }
+            => SyntaxFactory.QueryBody(new SyntaxList<QueryClauseSyntax>(), GenerateSelectClause(), default(QueryContinuationSyntax));
         
         private static FromClauseSyntax GenerateFromClause()
-        {
-            return SyntaxFactory.FromClause(SyntaxFactory.Token(SyntaxKind.FromKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.FromClause(SyntaxFactory.Token(SyntaxKind.FromKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName());
         
         private static LetClauseSyntax GenerateLetClause()
-        {
-            return SyntaxFactory.LetClause(SyntaxFactory.Token(SyntaxKind.LetKeyword), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.LetClause(SyntaxFactory.Token(SyntaxKind.LetKeyword), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
         
         private static JoinClauseSyntax GenerateJoinClause()
-        {
-            return SyntaxFactory.JoinClause(SyntaxFactory.Token(SyntaxKind.JoinKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OnKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsKeyword), GenerateIdentifierName(), default(JoinIntoClauseSyntax));
-        }
+            => SyntaxFactory.JoinClause(SyntaxFactory.Token(SyntaxKind.JoinKeyword), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OnKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsKeyword), GenerateIdentifierName(), default(JoinIntoClauseSyntax));
         
         private static JoinIntoClauseSyntax GenerateJoinIntoClause()
-        {
-            return SyntaxFactory.JoinIntoClause(SyntaxFactory.Token(SyntaxKind.IntoKeyword), SyntaxFactory.Identifier("Identifier"));
-        }
+            => SyntaxFactory.JoinIntoClause(SyntaxFactory.Token(SyntaxKind.IntoKeyword), SyntaxFactory.Identifier("Identifier"));
         
         private static WhereClauseSyntax GenerateWhereClause()
-        {
-            return SyntaxFactory.WhereClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.WhereClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName());
         
         private static OrderByClauseSyntax GenerateOrderByClause()
-        {
-            return SyntaxFactory.OrderByClause(SyntaxFactory.Token(SyntaxKind.OrderByKeyword), new SeparatedSyntaxList<OrderingSyntax>());
-        }
+            => SyntaxFactory.OrderByClause(SyntaxFactory.Token(SyntaxKind.OrderByKeyword), new SeparatedSyntaxList<OrderingSyntax>());
         
         private static OrderingSyntax GenerateOrdering()
-        {
-            return SyntaxFactory.Ordering(SyntaxKind.AscendingOrdering, GenerateIdentifierName(), default(SyntaxToken));
-        }
+            => SyntaxFactory.Ordering(SyntaxKind.AscendingOrdering, GenerateIdentifierName(), default(SyntaxToken));
         
         private static SelectClauseSyntax GenerateSelectClause()
-        {
-            return SyntaxFactory.SelectClause(SyntaxFactory.Token(SyntaxKind.SelectKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.SelectClause(SyntaxFactory.Token(SyntaxKind.SelectKeyword), GenerateIdentifierName());
         
         private static GroupClauseSyntax GenerateGroupClause()
-        {
-            return SyntaxFactory.GroupClause(SyntaxFactory.Token(SyntaxKind.GroupKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ByKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.GroupClause(SyntaxFactory.Token(SyntaxKind.GroupKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ByKeyword), GenerateIdentifierName());
         
         private static QueryContinuationSyntax GenerateQueryContinuation()
-        {
-            return SyntaxFactory.QueryContinuation(SyntaxFactory.Token(SyntaxKind.IntoKeyword), SyntaxFactory.Identifier("Identifier"), GenerateQueryBody());
-        }
+            => SyntaxFactory.QueryContinuation(SyntaxFactory.Token(SyntaxKind.IntoKeyword), SyntaxFactory.Identifier("Identifier"), GenerateQueryBody());
         
         private static OmittedArraySizeExpressionSyntax GenerateOmittedArraySizeExpression()
-        {
-            return SyntaxFactory.OmittedArraySizeExpression(SyntaxFactory.Token(SyntaxKind.OmittedArraySizeExpressionToken));
-        }
+            => SyntaxFactory.OmittedArraySizeExpression(SyntaxFactory.Token(SyntaxKind.OmittedArraySizeExpressionToken));
         
         private static InterpolatedStringExpressionSyntax GenerateInterpolatedStringExpression()
-        {
-            return SyntaxFactory.InterpolatedStringExpression(SyntaxFactory.Token(SyntaxKind.InterpolatedStringStartToken), new SyntaxList<InterpolatedStringContentSyntax>(), SyntaxFactory.Token(SyntaxKind.InterpolatedStringEndToken));
-        }
+            => SyntaxFactory.InterpolatedStringExpression(SyntaxFactory.Token(SyntaxKind.InterpolatedStringStartToken), new SyntaxList<InterpolatedStringContentSyntax>(), SyntaxFactory.Token(SyntaxKind.InterpolatedStringEndToken));
         
         private static IsPatternExpressionSyntax GenerateIsPatternExpression()
-        {
-            return SyntaxFactory.IsPatternExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.IsKeyword), GenerateDeclarationPattern());
-        }
+            => SyntaxFactory.IsPatternExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.IsKeyword), GenerateDiscardPattern());
         
         private static ThrowExpressionSyntax GenerateThrowExpression()
-        {
-            return SyntaxFactory.ThrowExpression(SyntaxFactory.Token(SyntaxKind.ThrowKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.ThrowExpression(SyntaxFactory.Token(SyntaxKind.ThrowKeyword), GenerateIdentifierName());
         
         private static WhenClauseSyntax GenerateWhenClause()
-        {
-            return SyntaxFactory.WhenClause(SyntaxFactory.Token(SyntaxKind.WhenKeyword), GenerateIdentifierName());
-        }
+            => SyntaxFactory.WhenClause(SyntaxFactory.Token(SyntaxKind.WhenKeyword), GenerateIdentifierName());
+        
+        private static DiscardPatternSyntax GenerateDiscardPattern()
+            => SyntaxFactory.DiscardPattern(SyntaxFactory.Token(SyntaxKind.UnderscoreToken));
         
         private static DeclarationPatternSyntax GenerateDeclarationPattern()
-        {
-            return SyntaxFactory.DeclarationPattern(GenerateIdentifierName(), GenerateSingleVariableDesignation());
-        }
+            => SyntaxFactory.DeclarationPattern(GenerateIdentifierName(), GenerateSingleVariableDesignation());
+        
+        private static VarPatternSyntax GenerateVarPattern()
+            => SyntaxFactory.VarPattern(SyntaxFactory.Token(SyntaxKind.VarKeyword), GenerateSingleVariableDesignation());
+        
+        private static RecursivePatternSyntax GenerateRecursivePattern()
+            => SyntaxFactory.RecursivePattern(default(TypeSyntax), default(PositionalPatternClauseSyntax), default(PropertyPatternClauseSyntax), default(VariableDesignationSyntax));
+        
+        private static PositionalPatternClauseSyntax GeneratePositionalPatternClause()
+            => SyntaxFactory.PositionalPatternClause(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<SubpatternSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
+        
+        private static PropertyPatternClauseSyntax GeneratePropertyPatternClause()
+            => SyntaxFactory.PropertyPatternClause(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<SubpatternSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static SubpatternSyntax GenerateSubpattern()
+            => SyntaxFactory.Subpattern(default(NameColonSyntax), GenerateDiscardPattern());
         
         private static ConstantPatternSyntax GenerateConstantPattern()
-        {
-            return SyntaxFactory.ConstantPattern(GenerateIdentifierName());
-        }
+            => SyntaxFactory.ConstantPattern(GenerateIdentifierName());
         
         private static InterpolatedStringTextSyntax GenerateInterpolatedStringText()
-        {
-            return SyntaxFactory.InterpolatedStringText(SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
-        }
+            => SyntaxFactory.InterpolatedStringText(SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
         
         private static InterpolationSyntax GenerateInterpolation()
-        {
-            return SyntaxFactory.Interpolation(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), GenerateIdentifierName(), default(InterpolationAlignmentClauseSyntax), default(InterpolationFormatClauseSyntax), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.Interpolation(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), GenerateIdentifierName(), default(InterpolationAlignmentClauseSyntax), default(InterpolationFormatClauseSyntax), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static InterpolationAlignmentClauseSyntax GenerateInterpolationAlignmentClause()
-        {
-            return SyntaxFactory.InterpolationAlignmentClause(SyntaxFactory.Identifier("CommaToken"), GenerateIdentifierName());
-        }
+            => SyntaxFactory.InterpolationAlignmentClause(SyntaxFactory.Identifier("CommaToken"), GenerateIdentifierName());
         
         private static InterpolationFormatClauseSyntax GenerateInterpolationFormatClause()
-        {
-            return SyntaxFactory.InterpolationFormatClause(SyntaxFactory.Identifier("ColonToken"), SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
-        }
+            => SyntaxFactory.InterpolationFormatClause(SyntaxFactory.Identifier("ColonToken"), SyntaxFactory.Token(SyntaxKind.InterpolatedStringTextToken));
         
         private static GlobalStatementSyntax GenerateGlobalStatement()
-        {
-            return SyntaxFactory.GlobalStatement(GenerateBlock());
-        }
+            => SyntaxFactory.GlobalStatement(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateBlock());
         
         private static BlockSyntax GenerateBlock()
-        {
-            return SyntaxFactory.Block(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<StatementSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.Block(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<StatementSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static LocalFunctionStatementSyntax GenerateLocalFunctionStatement()
-        {
-            return SyntaxFactory.LocalFunctionStatement(new SyntaxTokenList(), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.LocalFunctionStatement(new SyntaxTokenList(), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static LocalDeclarationStatementSyntax GenerateLocalDeclarationStatement()
-        {
-            return SyntaxFactory.LocalDeclarationStatement(new SyntaxTokenList(), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.LocalDeclarationStatement(default(SyntaxToken), default(SyntaxToken), new SyntaxTokenList(), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static VariableDeclarationSyntax GenerateVariableDeclaration()
-        {
-            return SyntaxFactory.VariableDeclaration(GenerateIdentifierName(), new SeparatedSyntaxList<VariableDeclaratorSyntax>());
-        }
+            => SyntaxFactory.VariableDeclaration(GenerateIdentifierName(), new SeparatedSyntaxList<VariableDeclaratorSyntax>());
         
         private static VariableDeclaratorSyntax GenerateVariableDeclarator()
-        {
-            return SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier("Identifier"), default(BracketedArgumentListSyntax), default(EqualsValueClauseSyntax));
-        }
+            => SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier("Identifier"), default(BracketedArgumentListSyntax), default(EqualsValueClauseSyntax));
         
         private static EqualsValueClauseSyntax GenerateEqualsValueClause()
-        {
-            return SyntaxFactory.EqualsValueClause(SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.EqualsValueClause(SyntaxFactory.Token(SyntaxKind.EqualsToken), GenerateIdentifierName());
         
         private static SingleVariableDesignationSyntax GenerateSingleVariableDesignation()
-        {
-            return SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("Identifier"));
-        }
+            => SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("Identifier"));
         
         private static DiscardDesignationSyntax GenerateDiscardDesignation()
-        {
-            return SyntaxFactory.DiscardDesignation(SyntaxFactory.Token(SyntaxKind.UnderscoreToken));
-        }
+            => SyntaxFactory.DiscardDesignation(SyntaxFactory.Token(SyntaxKind.UnderscoreToken));
         
         private static ParenthesizedVariableDesignationSyntax GenerateParenthesizedVariableDesignation()
-        {
-            return SyntaxFactory.ParenthesizedVariableDesignation(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<VariableDesignationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.ParenthesizedVariableDesignation(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<VariableDesignationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static ExpressionStatementSyntax GenerateExpressionStatement()
-        {
-            return SyntaxFactory.ExpressionStatement(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.ExpressionStatement(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static EmptyStatementSyntax GenerateEmptyStatement()
-        {
-            return SyntaxFactory.EmptyStatement(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.EmptyStatement(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static LabeledStatementSyntax GenerateLabeledStatement()
-        {
-            return SyntaxFactory.LabeledStatement(SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateBlock());
-        }
+            => SyntaxFactory.LabeledStatement(SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.ColonToken), GenerateBlock());
         
         private static GotoStatementSyntax GenerateGotoStatement()
-        {
-            return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, SyntaxFactory.Token(SyntaxKind.GotoKeyword), default(SyntaxToken), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, SyntaxFactory.Token(SyntaxKind.GotoKeyword), default(SyntaxToken), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static BreakStatementSyntax GenerateBreakStatement()
-        {
-            return SyntaxFactory.BreakStatement(SyntaxFactory.Token(SyntaxKind.BreakKeyword), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.BreakStatement(SyntaxFactory.Token(SyntaxKind.BreakKeyword), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static ContinueStatementSyntax GenerateContinueStatement()
-        {
-            return SyntaxFactory.ContinueStatement(SyntaxFactory.Token(SyntaxKind.ContinueKeyword), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.ContinueStatement(SyntaxFactory.Token(SyntaxKind.ContinueKeyword), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static ReturnStatementSyntax GenerateReturnStatement()
-        {
-            return SyntaxFactory.ReturnStatement(SyntaxFactory.Token(SyntaxKind.ReturnKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.ReturnStatement(SyntaxFactory.Token(SyntaxKind.ReturnKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static ThrowStatementSyntax GenerateThrowStatement()
-        {
-            return SyntaxFactory.ThrowStatement(SyntaxFactory.Token(SyntaxKind.ThrowKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.ThrowStatement(SyntaxFactory.Token(SyntaxKind.ThrowKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static YieldStatementSyntax GenerateYieldStatement()
-        {
-            return SyntaxFactory.YieldStatement(SyntaxKind.YieldReturnStatement, SyntaxFactory.Token(SyntaxKind.YieldKeyword), SyntaxFactory.Token(SyntaxKind.ReturnKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.YieldStatement(SyntaxKind.YieldReturnStatement, SyntaxFactory.Token(SyntaxKind.YieldKeyword), SyntaxFactory.Token(SyntaxKind.ReturnKeyword), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static WhileStatementSyntax GenerateWhileStatement()
-        {
-            return SyntaxFactory.WhileStatement(SyntaxFactory.Token(SyntaxKind.WhileKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.WhileStatement(SyntaxFactory.Token(SyntaxKind.WhileKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static DoStatementSyntax GenerateDoStatement()
-        {
-            return SyntaxFactory.DoStatement(SyntaxFactory.Token(SyntaxKind.DoKeyword), GenerateBlock(), SyntaxFactory.Token(SyntaxKind.WhileKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.DoStatement(SyntaxFactory.Token(SyntaxKind.DoKeyword), GenerateBlock(), SyntaxFactory.Token(SyntaxKind.WhileKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static ForStatementSyntax GenerateForStatement()
-        {
-            return SyntaxFactory.ForStatement(SyntaxFactory.Token(SyntaxKind.ForKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), default(VariableDeclarationSyntax), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.SemicolonToken), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.ForStatement(SyntaxFactory.Token(SyntaxKind.ForKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), default(VariableDeclarationSyntax), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.SemicolonToken), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.SemicolonToken), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static ForEachStatementSyntax GenerateForEachStatement()
-        {
-            return SyntaxFactory.ForEachStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.ForEachKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.ForEachStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.ForEachKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static ForEachVariableStatementSyntax GenerateForEachVariableStatement()
-        {
-            return SyntaxFactory.ForEachVariableStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.ForEachKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.ForEachVariableStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.ForEachKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.InKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static UsingStatementSyntax GenerateUsingStatement()
-        {
-            return SyntaxFactory.UsingStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.UsingKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), default(VariableDeclarationSyntax), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.UsingStatement(default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.UsingKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), default(VariableDeclarationSyntax), default(ExpressionSyntax), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static FixedStatementSyntax GenerateFixedStatement()
-        {
-            return SyntaxFactory.FixedStatement(SyntaxFactory.Token(SyntaxKind.FixedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.FixedStatement(SyntaxFactory.Token(SyntaxKind.FixedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static CheckedStatementSyntax GenerateCheckedStatement()
-        {
-            return SyntaxFactory.CheckedStatement(SyntaxKind.CheckedStatement, SyntaxFactory.Token(SyntaxKind.CheckedKeyword), GenerateBlock());
-        }
+            => SyntaxFactory.CheckedStatement(SyntaxKind.CheckedStatement, SyntaxFactory.Token(SyntaxKind.CheckedKeyword), GenerateBlock());
         
         private static UnsafeStatementSyntax GenerateUnsafeStatement()
-        {
-            return SyntaxFactory.UnsafeStatement(SyntaxFactory.Token(SyntaxKind.UnsafeKeyword), GenerateBlock());
-        }
+            => SyntaxFactory.UnsafeStatement(SyntaxFactory.Token(SyntaxKind.UnsafeKeyword), GenerateBlock());
         
         private static LockStatementSyntax GenerateLockStatement()
-        {
-            return SyntaxFactory.LockStatement(SyntaxFactory.Token(SyntaxKind.LockKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
-        }
+            => SyntaxFactory.LockStatement(SyntaxFactory.Token(SyntaxKind.LockKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock());
         
         private static IfStatementSyntax GenerateIfStatement()
-        {
-            return SyntaxFactory.IfStatement(SyntaxFactory.Token(SyntaxKind.IfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock(), default(ElseClauseSyntax));
-        }
+            => SyntaxFactory.IfStatement(SyntaxFactory.Token(SyntaxKind.IfKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), GenerateBlock(), default(ElseClauseSyntax));
         
         private static ElseClauseSyntax GenerateElseClause()
-        {
-            return SyntaxFactory.ElseClause(SyntaxFactory.Token(SyntaxKind.ElseKeyword), GenerateBlock());
-        }
+            => SyntaxFactory.ElseClause(SyntaxFactory.Token(SyntaxKind.ElseKeyword), GenerateBlock());
         
         private static SwitchStatementSyntax GenerateSwitchStatement()
-        {
-            return SyntaxFactory.SwitchStatement(SyntaxFactory.Token(SyntaxKind.SwitchKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<SwitchSectionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.SwitchStatement(SyntaxFactory.Token(SyntaxKind.SwitchKeyword), default(SyntaxToken), GenerateIdentifierName(), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<SwitchSectionSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static SwitchSectionSyntax GenerateSwitchSection()
-        {
-            return SyntaxFactory.SwitchSection(new SyntaxList<SwitchLabelSyntax>(), new SyntaxList<StatementSyntax>());
-        }
+            => SyntaxFactory.SwitchSection(new SyntaxList<SwitchLabelSyntax>(), new SyntaxList<StatementSyntax>());
         
         private static CasePatternSwitchLabelSyntax GenerateCasePatternSwitchLabel()
-        {
-            return SyntaxFactory.CasePatternSwitchLabel(SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateDeclarationPattern(), default(WhenClauseSyntax), SyntaxFactory.Identifier("ColonToken"));
-        }
+            => SyntaxFactory.CasePatternSwitchLabel(SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateDiscardPattern(), default(WhenClauseSyntax), SyntaxFactory.Identifier("ColonToken"));
         
         private static CaseSwitchLabelSyntax GenerateCaseSwitchLabel()
-        {
-            return SyntaxFactory.CaseSwitchLabel(SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateIdentifierName(), SyntaxFactory.Identifier("ColonToken"));
-        }
+            => SyntaxFactory.CaseSwitchLabel(SyntaxFactory.Token(SyntaxKind.CaseKeyword), GenerateIdentifierName(), SyntaxFactory.Identifier("ColonToken"));
         
         private static DefaultSwitchLabelSyntax GenerateDefaultSwitchLabel()
-        {
-            return SyntaxFactory.DefaultSwitchLabel(SyntaxFactory.Token(SyntaxKind.DefaultKeyword), SyntaxFactory.Identifier("ColonToken"));
-        }
+            => SyntaxFactory.DefaultSwitchLabel(SyntaxFactory.Token(SyntaxKind.DefaultKeyword), SyntaxFactory.Identifier("ColonToken"));
+        
+        private static SwitchExpressionSyntax GenerateSwitchExpression()
+            => SyntaxFactory.SwitchExpression(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SwitchKeyword), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<SwitchExpressionArmSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+        
+        private static SwitchExpressionArmSyntax GenerateSwitchExpressionArm()
+            => SyntaxFactory.SwitchExpressionArm(GenerateDiscardPattern(), default(WhenClauseSyntax), SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
         
         private static TryStatementSyntax GenerateTryStatement()
-        {
-            return SyntaxFactory.TryStatement(SyntaxFactory.Token(SyntaxKind.TryKeyword), GenerateBlock(), new SyntaxList<CatchClauseSyntax>(), default(FinallyClauseSyntax));
-        }
+            => SyntaxFactory.TryStatement(SyntaxFactory.Token(SyntaxKind.TryKeyword), GenerateBlock(), new SyntaxList<CatchClauseSyntax>(), default(FinallyClauseSyntax));
         
         private static CatchClauseSyntax GenerateCatchClause()
-        {
-            return SyntaxFactory.CatchClause(SyntaxFactory.Token(SyntaxKind.CatchKeyword), default(CatchDeclarationSyntax), default(CatchFilterClauseSyntax), GenerateBlock());
-        }
+            => SyntaxFactory.CatchClause(SyntaxFactory.Token(SyntaxKind.CatchKeyword), default(CatchDeclarationSyntax), default(CatchFilterClauseSyntax), GenerateBlock());
         
         private static CatchDeclarationSyntax GenerateCatchDeclaration()
-        {
-            return SyntaxFactory.CatchDeclaration(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.CatchDeclaration(SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static CatchFilterClauseSyntax GenerateCatchFilterClause()
-        {
-            return SyntaxFactory.CatchFilterClause(SyntaxFactory.Token(SyntaxKind.WhenKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.CatchFilterClause(SyntaxFactory.Token(SyntaxKind.WhenKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static FinallyClauseSyntax GenerateFinallyClause()
-        {
-            return SyntaxFactory.FinallyClause(SyntaxFactory.Token(SyntaxKind.FinallyKeyword), GenerateBlock());
-        }
+            => SyntaxFactory.FinallyClause(SyntaxFactory.Token(SyntaxKind.FinallyKeyword), GenerateBlock());
         
         private static CompilationUnitSyntax GenerateCompilationUnit()
-        {
-            return SyntaxFactory.CompilationUnit(new SyntaxList<ExternAliasDirectiveSyntax>(), new SyntaxList<UsingDirectiveSyntax>(), new SyntaxList<AttributeListSyntax>(), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfFileToken));
-        }
+            => SyntaxFactory.CompilationUnit(new SyntaxList<ExternAliasDirectiveSyntax>(), new SyntaxList<UsingDirectiveSyntax>(), new SyntaxList<AttributeListSyntax>(), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfFileToken));
         
         private static ExternAliasDirectiveSyntax GenerateExternAliasDirective()
-        {
-            return SyntaxFactory.ExternAliasDirective(SyntaxFactory.Token(SyntaxKind.ExternKeyword), SyntaxFactory.Token(SyntaxKind.AliasKeyword), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.ExternAliasDirective(SyntaxFactory.Token(SyntaxKind.ExternKeyword), SyntaxFactory.Token(SyntaxKind.AliasKeyword), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static UsingDirectiveSyntax GenerateUsingDirective()
-        {
-            return SyntaxFactory.UsingDirective(SyntaxFactory.Token(SyntaxKind.UsingKeyword), default(SyntaxToken), default(NameEqualsSyntax), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.UsingDirective(SyntaxFactory.Token(SyntaxKind.UsingKeyword), default(SyntaxToken), default(NameEqualsSyntax), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static NamespaceDeclarationSyntax GenerateNamespaceDeclaration()
-        {
-            return SyntaxFactory.NamespaceDeclaration(SyntaxFactory.Token(SyntaxKind.NamespaceKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<ExternAliasDirectiveSyntax>(), new SyntaxList<UsingDirectiveSyntax>(), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.NamespaceDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.NamespaceKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<ExternAliasDirectiveSyntax>(), new SyntaxList<UsingDirectiveSyntax>(), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
         
         private static AttributeListSyntax GenerateAttributeList()
-        {
-            return SyntaxFactory.AttributeList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), default(AttributeTargetSpecifierSyntax), new SeparatedSyntaxList<AttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
+            => SyntaxFactory.AttributeList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), default(AttributeTargetSpecifierSyntax), new SeparatedSyntaxList<AttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
         
         private static AttributeTargetSpecifierSyntax GenerateAttributeTargetSpecifier()
-        {
-            return SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
+            => SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.ColonToken));
         
         private static AttributeSyntax GenerateAttribute()
-        {
-            return SyntaxFactory.Attribute(GenerateIdentifierName(), default(AttributeArgumentListSyntax));
-        }
+            => SyntaxFactory.Attribute(GenerateIdentifierName(), default(AttributeArgumentListSyntax));
         
         private static AttributeArgumentListSyntax GenerateAttributeArgumentList()
-        {
-            return SyntaxFactory.AttributeArgumentList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<AttributeArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.AttributeArgumentList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<AttributeArgumentSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static AttributeArgumentSyntax GenerateAttributeArgument()
-        {
-            return SyntaxFactory.AttributeArgument(default(NameEqualsSyntax), default(NameColonSyntax), GenerateIdentifierName());
-        }
+            => SyntaxFactory.AttributeArgument(default(NameEqualsSyntax), default(NameColonSyntax), GenerateIdentifierName());
         
         private static NameEqualsSyntax GenerateNameEquals()
-        {
-            return SyntaxFactory.NameEquals(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsToken));
-        }
+            => SyntaxFactory.NameEquals(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EqualsToken));
         
         private static TypeParameterListSyntax GenerateTypeParameterList()
-        {
-            return SyntaxFactory.TypeParameterList(SyntaxFactory.Token(SyntaxKind.LessThanToken), new SeparatedSyntaxList<TypeParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
+            => SyntaxFactory.TypeParameterList(SyntaxFactory.Token(SyntaxKind.LessThanToken), new SeparatedSyntaxList<TypeParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
         
         private static TypeParameterSyntax GenerateTypeParameter()
-        {
-            return SyntaxFactory.TypeParameter(new SyntaxList<AttributeListSyntax>(), default(SyntaxToken), SyntaxFactory.Identifier("Identifier"));
-        }
+            => SyntaxFactory.TypeParameter(new SyntaxList<AttributeListSyntax>(), default(SyntaxToken), SyntaxFactory.Identifier("Identifier"));
         
         private static ClassDeclarationSyntax GenerateClassDeclaration()
-        {
-            return SyntaxFactory.ClassDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.ClassKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.ClassDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.ClassKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
         
         private static StructDeclarationSyntax GenerateStructDeclaration()
-        {
-            return SyntaxFactory.StructDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.StructKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.StructDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.StructKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
         
         private static InterfaceDeclarationSyntax GenerateInterfaceDeclaration()
-        {
-            return SyntaxFactory.InterfaceDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.InterfaceKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.InterfaceDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.InterfaceKeyword), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), default(BaseListSyntax), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<MemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
         
         private static EnumDeclarationSyntax GenerateEnumDeclaration()
-        {
-            return SyntaxFactory.EnumDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EnumKeyword), SyntaxFactory.Identifier("Identifier"), default(BaseListSyntax), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<EnumMemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
-        }
+            => SyntaxFactory.EnumDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EnumKeyword), SyntaxFactory.Identifier("Identifier"), default(BaseListSyntax), SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SeparatedSyntaxList<EnumMemberDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken), default(SyntaxToken));
         
         private static DelegateDeclarationSyntax GenerateDelegateDeclaration()
-        {
-            return SyntaxFactory.DelegateDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.DelegateKeyword), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.DelegateDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.DelegateKeyword), GenerateIdentifierName(), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static EnumMemberDeclarationSyntax GenerateEnumMemberDeclaration()
-        {
-            return SyntaxFactory.EnumMemberDeclaration(new SyntaxList<AttributeListSyntax>(), SyntaxFactory.Identifier("Identifier"), default(EqualsValueClauseSyntax));
-        }
+            => SyntaxFactory.EnumMemberDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Identifier("Identifier"), default(EqualsValueClauseSyntax));
         
         private static BaseListSyntax GenerateBaseList()
-        {
-            return SyntaxFactory.BaseList(SyntaxFactory.Token(SyntaxKind.ColonToken), new SeparatedSyntaxList<BaseTypeSyntax>());
-        }
+            => SyntaxFactory.BaseList(SyntaxFactory.Token(SyntaxKind.ColonToken), new SeparatedSyntaxList<BaseTypeSyntax>());
         
         private static SimpleBaseTypeSyntax GenerateSimpleBaseType()
-        {
-            return SyntaxFactory.SimpleBaseType(GenerateIdentifierName());
-        }
+            => SyntaxFactory.SimpleBaseType(GenerateIdentifierName());
         
         private static TypeParameterConstraintClauseSyntax GenerateTypeParameterConstraintClause()
-        {
-            return SyntaxFactory.TypeParameterConstraintClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken), new SeparatedSyntaxList<TypeParameterConstraintSyntax>());
-        }
+            => SyntaxFactory.TypeParameterConstraintClause(SyntaxFactory.Token(SyntaxKind.WhereKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.ColonToken), new SeparatedSyntaxList<TypeParameterConstraintSyntax>());
         
         private static ConstructorConstraintSyntax GenerateConstructorConstraint()
-        {
-            return SyntaxFactory.ConstructorConstraint(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.ConstructorConstraint(SyntaxFactory.Token(SyntaxKind.NewKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static ClassOrStructConstraintSyntax GenerateClassOrStructConstraint()
-        {
-            return SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint, SyntaxFactory.Token(SyntaxKind.ClassKeyword), default(SyntaxToken));
-        }
+            => SyntaxFactory.ClassOrStructConstraint(SyntaxKind.ClassConstraint, SyntaxFactory.Token(SyntaxKind.ClassKeyword), default(SyntaxToken));
         
         private static TypeConstraintSyntax GenerateTypeConstraint()
-        {
-            return SyntaxFactory.TypeConstraint(GenerateIdentifierName());
-        }
+            => SyntaxFactory.TypeConstraint(GenerateIdentifierName());
         
         private static FieldDeclarationSyntax GenerateFieldDeclaration()
-        {
-            return SyntaxFactory.FieldDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.FieldDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static EventFieldDeclarationSyntax GenerateEventFieldDeclaration()
-        {
-            return SyntaxFactory.EventFieldDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-        }
+            => SyntaxFactory.EventFieldDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateVariableDeclaration(), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         
         private static ExplicitInterfaceSpecifierSyntax GenerateExplicitInterfaceSpecifier()
-        {
-            return SyntaxFactory.ExplicitInterfaceSpecifier(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken));
-        }
+            => SyntaxFactory.ExplicitInterfaceSpecifier(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken));
         
         private static MethodDeclarationSyntax GenerateMethodDeclaration()
-        {
-            return SyntaxFactory.MethodDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.MethodDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), default(TypeParameterListSyntax), GenerateParameterList(), new SyntaxList<TypeParameterConstraintClauseSyntax>(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static OperatorDeclarationSyntax GenerateOperatorDeclaration()
-        {
-            return SyntaxFactory.OperatorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.OperatorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), SyntaxFactory.Token(SyntaxKind.PlusToken), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static ConversionOperatorDeclarationSyntax GenerateConversionOperatorDeclaration()
-        {
-            return SyntaxFactory.ConversionOperatorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.ConversionOperatorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static ConstructorDeclarationSyntax GenerateConstructorDeclaration()
-        {
-            return SyntaxFactory.ConstructorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), default(ConstructorInitializerSyntax), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.ConstructorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), default(ConstructorInitializerSyntax), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static ConstructorInitializerSyntax GenerateConstructorInitializer()
-        {
-            return SyntaxFactory.ConstructorInitializer(SyntaxKind.BaseConstructorInitializer, SyntaxFactory.Token(SyntaxKind.ColonToken), SyntaxFactory.Token(SyntaxKind.BaseKeyword), GenerateArgumentList());
-        }
+            => SyntaxFactory.ConstructorInitializer(SyntaxKind.BaseConstructorInitializer, SyntaxFactory.Token(SyntaxKind.ColonToken), SyntaxFactory.Token(SyntaxKind.BaseKeyword), GenerateArgumentList());
         
         private static DestructorDeclarationSyntax GenerateDestructorDeclaration()
-        {
-            return SyntaxFactory.DestructorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.TildeToken), SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.DestructorDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.TildeToken), SyntaxFactory.Identifier("Identifier"), GenerateParameterList(), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static PropertyDeclarationSyntax GeneratePropertyDeclaration()
-        {
-            return SyntaxFactory.PropertyDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), default(AccessorListSyntax), default(ArrowExpressionClauseSyntax), default(EqualsValueClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.PropertyDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), default(AccessorListSyntax), default(ArrowExpressionClauseSyntax), default(EqualsValueClauseSyntax), default(SyntaxToken));
         
         private static ArrowExpressionClauseSyntax GenerateArrowExpressionClause()
-        {
-            return SyntaxFactory.ArrowExpressionClause(SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.ArrowExpressionClause(SyntaxFactory.Token(SyntaxKind.EqualsGreaterThanToken), GenerateIdentifierName());
         
         private static EventDeclarationSyntax GenerateEventDeclaration()
-        {
-            return SyntaxFactory.EventDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), GenerateAccessorList());
-        }
+            => SyntaxFactory.EventDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.EventKeyword), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Identifier("Identifier"), default(AccessorListSyntax), default(SyntaxToken));
         
         private static IndexerDeclarationSyntax GenerateIndexerDeclaration()
-        {
-            return SyntaxFactory.IndexerDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Token(SyntaxKind.ThisKeyword), GenerateBracketedParameterList(), default(AccessorListSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.IndexerDeclaration(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), GenerateIdentifierName(), default(ExplicitInterfaceSpecifierSyntax), SyntaxFactory.Token(SyntaxKind.ThisKeyword), GenerateBracketedParameterList(), default(AccessorListSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static AccessorListSyntax GenerateAccessorList()
-        {
-            return SyntaxFactory.AccessorList(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<AccessorDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-        }
+            => SyntaxFactory.AccessorList(SyntaxFactory.Token(SyntaxKind.OpenBraceToken), new SyntaxList<AccessorDeclarationSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
         
         private static AccessorDeclarationSyntax GenerateAccessorDeclaration()
-        {
-            return SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.GetKeyword), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
-        }
+            => SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.GetKeyword), default(BlockSyntax), default(ArrowExpressionClauseSyntax), default(SyntaxToken));
         
         private static ParameterListSyntax GenerateParameterList()
-        {
-            return SyntaxFactory.ParameterList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.ParameterList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<ParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static BracketedParameterListSyntax GenerateBracketedParameterList()
-        {
-            return SyntaxFactory.BracketedParameterList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
+            => SyntaxFactory.BracketedParameterList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<ParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
         
         private static ParameterSyntax GenerateParameter()
-        {
-            return SyntaxFactory.Parameter(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), default(EqualsValueClauseSyntax));
-        }
+            => SyntaxFactory.Parameter(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), default(TypeSyntax), SyntaxFactory.Identifier("Identifier"), default(EqualsValueClauseSyntax));
         
         private static IncompleteMemberSyntax GenerateIncompleteMember()
-        {
-            return SyntaxFactory.IncompleteMember(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), default(TypeSyntax));
-        }
+            => SyntaxFactory.IncompleteMember(new SyntaxList<AttributeListSyntax>(), new SyntaxTokenList(), default(TypeSyntax));
         
         private static SkippedTokensTriviaSyntax GenerateSkippedTokensTrivia()
-        {
-            return SyntaxFactory.SkippedTokensTrivia(new SyntaxTokenList());
-        }
+            => SyntaxFactory.SkippedTokensTrivia(new SyntaxTokenList());
         
         private static DocumentationCommentTriviaSyntax GenerateDocumentationCommentTrivia()
-        {
-            return SyntaxFactory.DocumentationCommentTrivia(SyntaxKind.SingleLineDocumentationCommentTrivia, new SyntaxList<XmlNodeSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfDocumentationCommentToken));
-        }
+            => SyntaxFactory.DocumentationCommentTrivia(SyntaxKind.SingleLineDocumentationCommentTrivia, new SyntaxList<XmlNodeSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfDocumentationCommentToken));
         
         private static TypeCrefSyntax GenerateTypeCref()
-        {
-            return SyntaxFactory.TypeCref(GenerateIdentifierName());
-        }
+            => SyntaxFactory.TypeCref(GenerateIdentifierName());
         
         private static QualifiedCrefSyntax GenerateQualifiedCref()
-        {
-            return SyntaxFactory.QualifiedCref(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateNameMemberCref());
-        }
+            => SyntaxFactory.QualifiedCref(GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.DotToken), GenerateNameMemberCref());
         
         private static NameMemberCrefSyntax GenerateNameMemberCref()
-        {
-            return SyntaxFactory.NameMemberCref(GenerateIdentifierName(), default(CrefParameterListSyntax));
-        }
+            => SyntaxFactory.NameMemberCref(GenerateIdentifierName(), default(CrefParameterListSyntax));
         
         private static IndexerMemberCrefSyntax GenerateIndexerMemberCref()
-        {
-            return SyntaxFactory.IndexerMemberCref(SyntaxFactory.Token(SyntaxKind.ThisKeyword), default(CrefBracketedParameterListSyntax));
-        }
+            => SyntaxFactory.IndexerMemberCref(SyntaxFactory.Token(SyntaxKind.ThisKeyword), default(CrefBracketedParameterListSyntax));
         
         private static OperatorMemberCrefSyntax GenerateOperatorMemberCref()
-        {
-            return SyntaxFactory.OperatorMemberCref(SyntaxFactory.Token(SyntaxKind.OperatorKeyword), SyntaxFactory.Token(SyntaxKind.PlusToken), default(CrefParameterListSyntax));
-        }
+            => SyntaxFactory.OperatorMemberCref(SyntaxFactory.Token(SyntaxKind.OperatorKeyword), SyntaxFactory.Token(SyntaxKind.PlusToken), default(CrefParameterListSyntax));
         
         private static ConversionOperatorMemberCrefSyntax GenerateConversionOperatorMemberCref()
-        {
-            return SyntaxFactory.ConversionOperatorMemberCref(SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), default(CrefParameterListSyntax));
-        }
+            => SyntaxFactory.ConversionOperatorMemberCref(SyntaxFactory.Token(SyntaxKind.ImplicitKeyword), SyntaxFactory.Token(SyntaxKind.OperatorKeyword), GenerateIdentifierName(), default(CrefParameterListSyntax));
         
         private static CrefParameterListSyntax GenerateCrefParameterList()
-        {
-            return SyntaxFactory.CrefParameterList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<CrefParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
-        }
+            => SyntaxFactory.CrefParameterList(SyntaxFactory.Token(SyntaxKind.OpenParenToken), new SeparatedSyntaxList<CrefParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseParenToken));
         
         private static CrefBracketedParameterListSyntax GenerateCrefBracketedParameterList()
-        {
-            return SyntaxFactory.CrefBracketedParameterList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<CrefParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
-        }
+            => SyntaxFactory.CrefBracketedParameterList(SyntaxFactory.Token(SyntaxKind.OpenBracketToken), new SeparatedSyntaxList<CrefParameterSyntax>(), SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
         
         private static CrefParameterSyntax GenerateCrefParameter()
-        {
-            return SyntaxFactory.CrefParameter(default(SyntaxToken), GenerateIdentifierName());
-        }
+            => SyntaxFactory.CrefParameter(default(SyntaxToken), GenerateIdentifierName());
         
         private static XmlElementSyntax GenerateXmlElement()
-        {
-            return SyntaxFactory.XmlElement(GenerateXmlElementStartTag(), new SyntaxList<XmlNodeSyntax>(), GenerateXmlElementEndTag());
-        }
+            => SyntaxFactory.XmlElement(GenerateXmlElementStartTag(), new SyntaxList<XmlNodeSyntax>(), GenerateXmlElementEndTag());
         
         private static XmlElementStartTagSyntax GenerateXmlElementStartTag()
-        {
-            return SyntaxFactory.XmlElementStartTag(SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new SyntaxList<XmlAttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
+            => SyntaxFactory.XmlElementStartTag(SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new SyntaxList<XmlAttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
         
         private static XmlElementEndTagSyntax GenerateXmlElementEndTag()
-        {
-            return SyntaxFactory.XmlElementEndTag(SyntaxFactory.Token(SyntaxKind.LessThanSlashToken), GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
-        }
+            => SyntaxFactory.XmlElementEndTag(SyntaxFactory.Token(SyntaxKind.LessThanSlashToken), GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.GreaterThanToken));
         
         private static XmlEmptyElementSyntax GenerateXmlEmptyElement()
-        {
-            return SyntaxFactory.XmlEmptyElement(SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new SyntaxList<XmlAttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.SlashGreaterThanToken));
-        }
+            => SyntaxFactory.XmlEmptyElement(SyntaxFactory.Token(SyntaxKind.LessThanToken), GenerateXmlName(), new SyntaxList<XmlAttributeSyntax>(), SyntaxFactory.Token(SyntaxKind.SlashGreaterThanToken));
         
         private static XmlNameSyntax GenerateXmlName()
-        {
-            return SyntaxFactory.XmlName(default(XmlPrefixSyntax), SyntaxFactory.Identifier("LocalName"));
-        }
+            => SyntaxFactory.XmlName(default(XmlPrefixSyntax), SyntaxFactory.Identifier("LocalName"));
         
         private static XmlPrefixSyntax GenerateXmlPrefix()
-        {
-            return SyntaxFactory.XmlPrefix(SyntaxFactory.Identifier("Prefix"), SyntaxFactory.Token(SyntaxKind.ColonToken));
-        }
+            => SyntaxFactory.XmlPrefix(SyntaxFactory.Identifier("Prefix"), SyntaxFactory.Token(SyntaxKind.ColonToken));
         
         private static XmlTextAttributeSyntax GenerateXmlTextAttribute()
-        {
-            return SyntaxFactory.XmlTextAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
+            => SyntaxFactory.XmlTextAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
         
         private static XmlCrefAttributeSyntax GenerateXmlCrefAttribute()
-        {
-            return SyntaxFactory.XmlCrefAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateTypeCref(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
+            => SyntaxFactory.XmlCrefAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateTypeCref(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
         
         private static XmlNameAttributeSyntax GenerateXmlNameAttribute()
-        {
-            return SyntaxFactory.XmlNameAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
-        }
+            => SyntaxFactory.XmlNameAttribute(GenerateXmlName(), SyntaxFactory.Token(SyntaxKind.EqualsToken), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.SingleQuoteToken));
         
         private static XmlTextSyntax GenerateXmlText()
-        {
-            return SyntaxFactory.XmlText(new SyntaxTokenList());
-        }
+            => SyntaxFactory.XmlText(new SyntaxTokenList());
         
         private static XmlCDataSectionSyntax GenerateXmlCDataSection()
-        {
-            return SyntaxFactory.XmlCDataSection(SyntaxFactory.Token(SyntaxKind.XmlCDataStartToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlCDataEndToken));
-        }
+            => SyntaxFactory.XmlCDataSection(SyntaxFactory.Token(SyntaxKind.XmlCDataStartToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlCDataEndToken));
         
         private static XmlProcessingInstructionSyntax GenerateXmlProcessingInstruction()
-        {
-            return SyntaxFactory.XmlProcessingInstruction(SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionStartToken), GenerateXmlName(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionEndToken));
-        }
+            => SyntaxFactory.XmlProcessingInstruction(SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionStartToken), GenerateXmlName(), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlProcessingInstructionEndToken));
         
         private static XmlCommentSyntax GenerateXmlComment()
-        {
-            return SyntaxFactory.XmlComment(SyntaxFactory.Token(SyntaxKind.XmlCommentStartToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlCommentEndToken));
-        }
+            => SyntaxFactory.XmlComment(SyntaxFactory.Token(SyntaxKind.XmlCommentStartToken), new SyntaxTokenList(), SyntaxFactory.Token(SyntaxKind.XmlCommentEndToken));
         
         private static IfDirectiveTriviaSyntax GenerateIfDirectiveTrivia()
-        {
-            return SyntaxFactory.IfDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.IfKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
-        }
+            => SyntaxFactory.IfDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.IfKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
         
         private static ElifDirectiveTriviaSyntax GenerateElifDirectiveTrivia()
-        {
-            return SyntaxFactory.ElifDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ElifKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
-        }
+            => SyntaxFactory.ElifDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ElifKeyword), GenerateIdentifierName(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool(), new bool());
         
         private static ElseDirectiveTriviaSyntax GenerateElseDirectiveTrivia()
-        {
-            return SyntaxFactory.ElseDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ElseKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool());
-        }
+            => SyntaxFactory.ElseDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ElseKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool(), new bool());
         
         private static EndIfDirectiveTriviaSyntax GenerateEndIfDirectiveTrivia()
-        {
-            return SyntaxFactory.EndIfDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.EndIfKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.EndIfDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.EndIfKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static RegionDirectiveTriviaSyntax GenerateRegionDirectiveTrivia()
-        {
-            return SyntaxFactory.RegionDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.RegionKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.RegionDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.RegionKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static EndRegionDirectiveTriviaSyntax GenerateEndRegionDirectiveTrivia()
-        {
-            return SyntaxFactory.EndRegionDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.EndRegionKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.EndRegionDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.EndRegionKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static ErrorDirectiveTriviaSyntax GenerateErrorDirectiveTrivia()
-        {
-            return SyntaxFactory.ErrorDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ErrorKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.ErrorDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ErrorKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static WarningDirectiveTriviaSyntax GenerateWarningDirectiveTrivia()
-        {
-            return SyntaxFactory.WarningDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.WarningKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.WarningDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.WarningKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static BadDirectiveTriviaSyntax GenerateBadDirectiveTrivia()
-        {
-            return SyntaxFactory.BadDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.BadDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Identifier("Identifier"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static DefineDirectiveTriviaSyntax GenerateDefineDirectiveTrivia()
-        {
-            return SyntaxFactory.DefineDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.DefineKeyword), SyntaxFactory.Identifier("Name"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.DefineDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.DefineKeyword), SyntaxFactory.Identifier("Name"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static UndefDirectiveTriviaSyntax GenerateUndefDirectiveTrivia()
-        {
-            return SyntaxFactory.UndefDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.UndefKeyword), SyntaxFactory.Identifier("Name"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.UndefDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.UndefKeyword), SyntaxFactory.Identifier("Name"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static LineDirectiveTriviaSyntax GenerateLineDirectiveTrivia()
-        {
-            return SyntaxFactory.LineDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.LineKeyword), SyntaxFactory.Literal("1", 1), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.LineDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.LineKeyword), SyntaxFactory.Literal("1", 1), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static PragmaWarningDirectiveTriviaSyntax GeneratePragmaWarningDirectiveTrivia()
-        {
-            return SyntaxFactory.PragmaWarningDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.PragmaKeyword), SyntaxFactory.Token(SyntaxKind.WarningKeyword), SyntaxFactory.Token(SyntaxKind.DisableKeyword), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.PragmaWarningDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.PragmaKeyword), SyntaxFactory.Token(SyntaxKind.WarningKeyword), SyntaxFactory.Token(SyntaxKind.DisableKeyword), new SeparatedSyntaxList<ExpressionSyntax>(), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static PragmaChecksumDirectiveTriviaSyntax GeneratePragmaChecksumDirectiveTrivia()
-        {
-            return SyntaxFactory.PragmaChecksumDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.PragmaKeyword), SyntaxFactory.Token(SyntaxKind.ChecksumKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.PragmaChecksumDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.PragmaKeyword), SyntaxFactory.Token(SyntaxKind.ChecksumKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static ReferenceDirectiveTriviaSyntax GenerateReferenceDirectiveTrivia()
-        {
-            return SyntaxFactory.ReferenceDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ReferenceKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.ReferenceDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ReferenceKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static LoadDirectiveTriviaSyntax GenerateLoadDirectiveTrivia()
-        {
-            return SyntaxFactory.LoadDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.LoadKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.LoadDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.LoadKeyword), SyntaxFactory.Literal("string", "string"), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static ShebangDirectiveTriviaSyntax GenerateShebangDirectiveTrivia()
-        {
-            return SyntaxFactory.ShebangDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ExclamationToken), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.ShebangDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.ExclamationToken), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         
         private static NullableDirectiveTriviaSyntax GenerateNullableDirectiveTrivia()
-        {
-            return SyntaxFactory.NullableDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.NullableKeyword), SyntaxFactory.Token(SyntaxKind.EnableKeyword), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
-        }
+            => SyntaxFactory.NullableDirectiveTrivia(SyntaxFactory.Token(SyntaxKind.HashToken), SyntaxFactory.Token(SyntaxKind.NullableKeyword), SyntaxFactory.Token(SyntaxKind.EnableKeyword), default(SyntaxToken), SyntaxFactory.Token(SyntaxKind.EndOfDirectiveToken), new bool());
         #endregion Red Generators
         
         #region Red Factory and Property Tests
@@ -10142,7 +9679,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTypeArgumentList();
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind());
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind());
             var newNode = node.WithLessThanToken(node.LessThanToken).WithArguments(node.Arguments).WithGreaterThanToken(node.GreaterThanToken);
             Assert.Equal(node, newNode);
@@ -10176,7 +9713,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArrayType();
             
             Assert.NotNull(node.ElementType);
-            Assert.NotNull(node.RankSpecifiers);
+            Assert.Equal(default, node.RankSpecifiers);
             var newNode = node.WithElementType(node.ElementType).WithRankSpecifiers(node.RankSpecifiers);
             Assert.Equal(node, newNode);
         }
@@ -10187,10 +9724,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArrayRankSpecifier();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
-            Assert.NotNull(node.Sizes);
+            Assert.Equal(default, node.Sizes);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
-            Assert.Equal(SyntaxKind.None, node.QuestionToken.Kind());
-            var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithSizes(node.Sizes).WithCloseBracketToken(node.CloseBracketToken).WithQuestionToken(node.QuestionToken);
+            var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithSizes(node.Sizes).WithCloseBracketToken(node.CloseBracketToken);
             Assert.Equal(node, newNode);
         }
         
@@ -10222,7 +9758,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTupleType();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Elements);
+            Assert.Equal(default, node.Elements);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithElements(node.Elements).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -10279,7 +9815,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTupleExpression();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithArguments(node.Arguments).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -10574,7 +10110,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateArgumentList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithArguments(node.Arguments).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -10586,7 +10122,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBracketedArgumentList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
             var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithArguments(node.Arguments).WithCloseBracketToken(node.CloseBracketToken);
             Assert.Equal(node, newNode);
@@ -10647,8 +10183,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.None, node.AsyncKeyword.Kind());
             Assert.Equal(SyntaxKind.DelegateKeyword, node.DelegateKeyword.Kind());
             Assert.Null(node.ParameterList);
-            Assert.NotNull(node.Body);
-            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithDelegateKeyword(node.DelegateKeyword).WithParameterList(node.ParameterList).WithBody(node.Body);
+            Assert.NotNull(node.Block);
+            Assert.Null(node.ExpressionBody);
+            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithDelegateKeyword(node.DelegateKeyword).WithParameterList(node.ParameterList).WithBlock(node.Block).WithExpressionBody(node.ExpressionBody);
             Assert.Equal(node, newNode);
         }
         
@@ -10660,8 +10197,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.None, node.AsyncKeyword.Kind());
             Assert.NotNull(node.Parameter);
             Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.ArrowToken.Kind());
-            Assert.NotNull(node.Body);
-            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithParameter(node.Parameter).WithArrowToken(node.ArrowToken).WithBody(node.Body);
+            Assert.Null(node.Block);
+            Assert.Null(node.ExpressionBody);
+            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithParameter(node.Parameter).WithArrowToken(node.ArrowToken).WithBlock(node.Block).WithExpressionBody(node.ExpressionBody);
             Assert.Equal(node, newNode);
         }
         
@@ -10684,8 +10222,9 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.None, node.AsyncKeyword.Kind());
             Assert.NotNull(node.ParameterList);
             Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.ArrowToken.Kind());
-            Assert.NotNull(node.Body);
-            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithParameterList(node.ParameterList).WithArrowToken(node.ArrowToken).WithBody(node.Body);
+            Assert.Null(node.Block);
+            Assert.Null(node.ExpressionBody);
+            var newNode = node.WithAsyncKeyword(node.AsyncKeyword).WithParameterList(node.ParameterList).WithArrowToken(node.ArrowToken).WithBlock(node.Block).WithExpressionBody(node.ExpressionBody);
             Assert.Equal(node, newNode);
         }
         
@@ -10695,7 +10234,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateInitializerExpression();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Expressions);
+            Assert.Equal(default, node.Expressions);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             var newNode = node.WithOpenBraceToken(node.OpenBraceToken).WithExpressions(node.Expressions).WithCloseBraceToken(node.CloseBraceToken);
             Assert.Equal(node, newNode);
@@ -10732,7 +10271,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.NewKeyword, node.NewKeyword.Kind());
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Initializers);
+            Assert.Equal(default, node.Initializers);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             var newNode = node.WithNewKeyword(node.NewKeyword).WithOpenBraceToken(node.OpenBraceToken).WithInitializers(node.Initializers).WithCloseBraceToken(node.CloseBraceToken);
             Assert.Equal(node, newNode);
@@ -10757,7 +10296,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.NewKeyword, node.NewKeyword.Kind());
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
-            Assert.NotNull(node.Commas);
+            Assert.Equal(default, node.Commas);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
             Assert.NotNull(node.Initializer);
             var newNode = node.WithNewKeyword(node.NewKeyword).WithOpenBracketToken(node.OpenBracketToken).WithCommas(node.Commas).WithCloseBracketToken(node.CloseBracketToken).WithInitializer(node.Initializer);
@@ -10805,7 +10344,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateQueryBody();
             
-            Assert.NotNull(node.Clauses);
+            Assert.Equal(default, node.Clauses);
             Assert.NotNull(node.SelectOrGroup);
             Assert.Null(node.Continuation);
             var newNode = node.WithClauses(node.Clauses).WithSelectOrGroup(node.SelectOrGroup).WithContinuation(node.Continuation);
@@ -10886,7 +10425,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateOrderByClause();
             
             Assert.Equal(SyntaxKind.OrderByKeyword, node.OrderByKeyword.Kind());
-            Assert.NotNull(node.Orderings);
+            Assert.Equal(default, node.Orderings);
             var newNode = node.WithOrderByKeyword(node.OrderByKeyword).WithOrderings(node.Orderings);
             Assert.Equal(node, newNode);
         }
@@ -10954,7 +10493,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateInterpolatedStringExpression();
             
             Assert.Equal(SyntaxKind.InterpolatedStringStartToken, node.StringStartToken.Kind());
-            Assert.NotNull(node.Contents);
+            Assert.Equal(default, node.Contents);
             Assert.Equal(SyntaxKind.InterpolatedStringEndToken, node.StringEndToken.Kind());
             var newNode = node.WithStringStartToken(node.StringStartToken).WithContents(node.Contents).WithStringEndToken(node.StringEndToken);
             Assert.Equal(node, newNode);
@@ -10995,6 +10534,16 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestDiscardPatternFactoryAndProperties()
+        {
+            var node = GenerateDiscardPattern();
+            
+            Assert.Equal(SyntaxKind.UnderscoreToken, node.UnderscoreToken.Kind());
+            var newNode = node.WithUnderscoreToken(node.UnderscoreToken);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
         public void TestDeclarationPatternFactoryAndProperties()
         {
             var node = GenerateDeclarationPattern();
@@ -11002,6 +10551,65 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(node.Type);
             Assert.NotNull(node.Designation);
             var newNode = node.WithType(node.Type).WithDesignation(node.Designation);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestVarPatternFactoryAndProperties()
+        {
+            var node = GenerateVarPattern();
+            
+            Assert.Equal(SyntaxKind.VarKeyword, node.VarKeyword.Kind());
+            Assert.NotNull(node.Designation);
+            var newNode = node.WithVarKeyword(node.VarKeyword).WithDesignation(node.Designation);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestRecursivePatternFactoryAndProperties()
+        {
+            var node = GenerateRecursivePattern();
+            
+            Assert.Null(node.Type);
+            Assert.Null(node.PositionalPatternClause);
+            Assert.Null(node.PropertyPatternClause);
+            Assert.Null(node.Designation);
+            var newNode = node.WithType(node.Type).WithPositionalPatternClause(node.PositionalPatternClause).WithPropertyPatternClause(node.PropertyPatternClause).WithDesignation(node.Designation);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseFactoryAndProperties()
+        {
+            var node = GeneratePositionalPatternClause();
+            
+            Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
+            Assert.Equal(default, node.Subpatterns);
+            Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
+            var newNode = node.WithOpenParenToken(node.OpenParenToken).WithSubpatterns(node.Subpatterns).WithCloseParenToken(node.CloseParenToken);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseFactoryAndProperties()
+        {
+            var node = GeneratePropertyPatternClause();
+            
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
+            Assert.Equal(default, node.Subpatterns);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
+            var newNode = node.WithOpenBraceToken(node.OpenBraceToken).WithSubpatterns(node.Subpatterns).WithCloseBraceToken(node.CloseBraceToken);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestSubpatternFactoryAndProperties()
+        {
+            var node = GenerateSubpattern();
+            
+            Assert.Null(node.NameColon);
+            Assert.NotNull(node.Pattern);
+            var newNode = node.WithNameColon(node.NameColon).WithPattern(node.Pattern);
             Assert.Equal(node, newNode);
         }
         
@@ -11066,8 +10674,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateGlobalStatement();
             
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Statement);
-            var newNode = node.WithStatement(node.Statement);
+            var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithStatement(node.Statement);
             Assert.Equal(node, newNode);
         }
         
@@ -11077,7 +10687,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBlock();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Statements);
+            Assert.Equal(default, node.Statements);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             var newNode = node.WithOpenBraceToken(node.OpenBraceToken).WithStatements(node.Statements).WithCloseBraceToken(node.CloseBraceToken);
             Assert.Equal(node, newNode);
@@ -11088,12 +10698,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateLocalFunctionStatement();
             
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
@@ -11106,10 +10716,12 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateLocalDeclarationStatement();
             
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(SyntaxKind.None, node.AwaitKeyword.Kind());
+            Assert.Equal(SyntaxKind.None, node.UsingKeyword.Kind());
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind());
-            var newNode = node.WithModifiers(node.Modifiers).WithDeclaration(node.Declaration).WithSemicolonToken(node.SemicolonToken);
+            var newNode = node.WithAwaitKeyword(node.AwaitKeyword).WithUsingKeyword(node.UsingKeyword).WithModifiers(node.Modifiers).WithDeclaration(node.Declaration).WithSemicolonToken(node.SemicolonToken);
             Assert.Equal(node, newNode);
         }
         
@@ -11119,7 +10731,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateVariableDeclaration();
             
             Assert.NotNull(node.Type);
-            Assert.NotNull(node.Variables);
+            Assert.Equal(default, node.Variables);
             var newNode = node.WithType(node.Type).WithVariables(node.Variables);
             Assert.Equal(node, newNode);
         }
@@ -11173,7 +10785,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateParenthesizedVariableDesignation();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Variables);
+            Assert.Equal(default, node.Variables);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithVariables(node.Variables).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -11322,11 +10934,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.ForKeyword, node.ForKeyword.Kind());
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
             Assert.Null(node.Declaration);
-            Assert.NotNull(node.Initializers);
+            Assert.Equal(default, node.Initializers);
             Assert.Equal(SyntaxKind.SemicolonToken, node.FirstSemicolonToken.Kind());
             Assert.Null(node.Condition);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SecondSemicolonToken.Kind());
-            Assert.NotNull(node.Incrementors);
+            Assert.Equal(default, node.Incrementors);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             Assert.NotNull(node.Statement);
             var newNode = node.WithForKeyword(node.ForKeyword).WithOpenParenToken(node.OpenParenToken).WithDeclaration(node.Declaration).WithInitializers(node.Initializers).WithFirstSemicolonToken(node.FirstSemicolonToken).WithCondition(node.Condition).WithSecondSemicolonToken(node.SecondSemicolonToken).WithIncrementors(node.Incrementors).WithCloseParenToken(node.CloseParenToken).WithStatement(node.Statement);
@@ -11466,11 +11078,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateSwitchStatement();
             
             Assert.Equal(SyntaxKind.SwitchKeyword, node.SwitchKeyword.Kind());
-            Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
+            Assert.Equal(SyntaxKind.None, node.OpenParenToken.Kind());
             Assert.NotNull(node.Expression);
-            Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
+            Assert.Equal(SyntaxKind.None, node.CloseParenToken.Kind());
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Sections);
+            Assert.Equal(default, node.Sections);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             var newNode = node.WithSwitchKeyword(node.SwitchKeyword).WithOpenParenToken(node.OpenParenToken).WithExpression(node.Expression).WithCloseParenToken(node.CloseParenToken).WithOpenBraceToken(node.OpenBraceToken).WithSections(node.Sections).WithCloseBraceToken(node.CloseBraceToken);
             Assert.Equal(node, newNode);
@@ -11481,8 +11093,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateSwitchSection();
             
-            Assert.NotNull(node.Labels);
-            Assert.NotNull(node.Statements);
+            Assert.Equal(default, node.Labels);
+            Assert.Equal(default, node.Statements);
             var newNode = node.WithLabels(node.Labels).WithStatements(node.Statements);
             Assert.Equal(node, newNode);
         }
@@ -11524,13 +11136,40 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestSwitchExpressionFactoryAndProperties()
+        {
+            var node = GenerateSwitchExpression();
+            
+            Assert.NotNull(node.GoverningExpression);
+            Assert.Equal(SyntaxKind.SwitchKeyword, node.SwitchKeyword.Kind());
+            Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
+            Assert.Equal(default, node.Arms);
+            Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
+            var newNode = node.WithGoverningExpression(node.GoverningExpression).WithSwitchKeyword(node.SwitchKeyword).WithOpenBraceToken(node.OpenBraceToken).WithArms(node.Arms).WithCloseBraceToken(node.CloseBraceToken);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmFactoryAndProperties()
+        {
+            var node = GenerateSwitchExpressionArm();
+            
+            Assert.NotNull(node.Pattern);
+            Assert.Null(node.WhenClause);
+            Assert.Equal(SyntaxKind.EqualsGreaterThanToken, node.EqualsGreaterThanToken.Kind());
+            Assert.NotNull(node.Expression);
+            var newNode = node.WithPattern(node.Pattern).WithWhenClause(node.WhenClause).WithEqualsGreaterThanToken(node.EqualsGreaterThanToken).WithExpression(node.Expression);
+            Assert.Equal(node, newNode);
+        }
+        
+        [Fact]
         public void TestTryStatementFactoryAndProperties()
         {
             var node = GenerateTryStatement();
             
             Assert.Equal(SyntaxKind.TryKeyword, node.TryKeyword.Kind());
             Assert.NotNull(node.Block);
-            Assert.NotNull(node.Catches);
+            Assert.Equal(default, node.Catches);
             Assert.Null(node.Finally);
             var newNode = node.WithTryKeyword(node.TryKeyword).WithBlock(node.Block).WithCatches(node.Catches).WithFinally(node.Finally);
             Assert.Equal(node, newNode);
@@ -11591,10 +11230,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateCompilationUnit();
             
-            Assert.NotNull(node.Externs);
-            Assert.NotNull(node.Usings);
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Externs);
+            Assert.Equal(default, node.Usings);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.EndOfFileToken, node.EndOfFileToken.Kind());
             var newNode = node.WithExterns(node.Externs).WithUsings(node.Usings).WithAttributeLists(node.AttributeLists).WithMembers(node.Members).WithEndOfFileToken(node.EndOfFileToken);
             Assert.Equal(node, newNode);
@@ -11632,15 +11271,17 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateNamespaceDeclaration();
             
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.NamespaceKeyword, node.NamespaceKeyword.Kind());
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Externs);
-            Assert.NotNull(node.Usings);
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Externs);
+            Assert.Equal(default, node.Usings);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
-            var newNode = node.WithNamespaceKeyword(node.NamespaceKeyword).WithName(node.Name).WithOpenBraceToken(node.OpenBraceToken).WithExterns(node.Externs).WithUsings(node.Usings).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
+            var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithNamespaceKeyword(node.NamespaceKeyword).WithName(node.Name).WithOpenBraceToken(node.OpenBraceToken).WithExterns(node.Externs).WithUsings(node.Usings).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
             Assert.Equal(node, newNode);
         }
         
@@ -11651,7 +11292,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
             Assert.Null(node.Target);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
             var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithTarget(node.Target).WithAttributes(node.Attributes).WithCloseBracketToken(node.CloseBracketToken);
             Assert.Equal(node, newNode);
@@ -11685,7 +11326,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateAttributeArgumentList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Arguments);
+            Assert.Equal(default, node.Arguments);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithArguments(node.Arguments).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -11720,7 +11361,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateTypeParameterList();
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind());
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind());
             var newNode = node.WithLessThanToken(node.LessThanToken).WithParameters(node.Parameters).WithGreaterThanToken(node.GreaterThanToken);
             Assert.Equal(node, newNode);
@@ -11731,7 +11372,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateTypeParameter();
             
-            Assert.NotNull(node.AttributeLists);
+            Assert.Equal(default, node.AttributeLists);
             Assert.Equal(SyntaxKind.None, node.VarianceKeyword.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithVarianceKeyword(node.VarianceKeyword).WithIdentifier(node.Identifier);
@@ -11743,15 +11384,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateClassDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.ClassKeyword, node.Keyword.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithKeyword(node.Keyword).WithIdentifier(node.Identifier).WithTypeParameterList(node.TypeParameterList).WithBaseList(node.BaseList).WithConstraintClauses(node.ConstraintClauses).WithOpenBraceToken(node.OpenBraceToken).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
@@ -11763,15 +11404,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateStructDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.StructKeyword, node.Keyword.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithKeyword(node.Keyword).WithIdentifier(node.Identifier).WithTypeParameterList(node.TypeParameterList).WithBaseList(node.BaseList).WithConstraintClauses(node.ConstraintClauses).WithOpenBraceToken(node.OpenBraceToken).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
@@ -11783,15 +11424,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateInterfaceDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.InterfaceKeyword, node.Keyword.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.Null(node.BaseList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithKeyword(node.Keyword).WithIdentifier(node.Identifier).WithTypeParameterList(node.TypeParameterList).WithBaseList(node.BaseList).WithConstraintClauses(node.ConstraintClauses).WithOpenBraceToken(node.OpenBraceToken).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
@@ -11803,13 +11444,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEnumDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EnumKeyword, node.EnumKeyword.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.BaseList);
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Members);
+            Assert.Equal(default, node.Members);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithEnumKeyword(node.EnumKeyword).WithIdentifier(node.Identifier).WithBaseList(node.BaseList).WithOpenBraceToken(node.OpenBraceToken).WithMembers(node.Members).WithCloseBraceToken(node.CloseBraceToken).WithSemicolonToken(node.SemicolonToken);
@@ -11821,14 +11462,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDelegateDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.DelegateKeyword, node.DelegateKeyword.Kind());
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithDelegateKeyword(node.DelegateKeyword).WithReturnType(node.ReturnType).WithIdentifier(node.Identifier).WithTypeParameterList(node.TypeParameterList).WithParameterList(node.ParameterList).WithConstraintClauses(node.ConstraintClauses).WithSemicolonToken(node.SemicolonToken);
             Assert.Equal(node, newNode);
@@ -11839,10 +11480,11 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEnumMemberDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.EqualsValue);
-            var newNode = node.WithAttributeLists(node.AttributeLists).WithIdentifier(node.Identifier).WithEqualsValue(node.EqualsValue);
+            var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithIdentifier(node.Identifier).WithEqualsValue(node.EqualsValue);
             Assert.Equal(node, newNode);
         }
         
@@ -11852,7 +11494,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBaseList();
             
             Assert.Equal(SyntaxKind.ColonToken, node.ColonToken.Kind());
-            Assert.NotNull(node.Types);
+            Assert.Equal(default, node.Types);
             var newNode = node.WithColonToken(node.ColonToken).WithTypes(node.Types);
             Assert.Equal(node, newNode);
         }
@@ -11875,7 +11517,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.WhereKeyword, node.WhereKeyword.Kind());
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.ColonToken, node.ColonToken.Kind());
-            Assert.NotNull(node.Constraints);
+            Assert.Equal(default, node.Constraints);
             var newNode = node.WithWhereKeyword(node.WhereKeyword).WithName(node.Name).WithColonToken(node.ColonToken).WithConstraints(node.Constraints);
             Assert.Equal(node, newNode);
         }
@@ -11918,8 +11560,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateFieldDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind());
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithDeclaration(node.Declaration).WithSemicolonToken(node.SemicolonToken);
@@ -11931,8 +11573,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEventFieldDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EventKeyword, node.EventKeyword.Kind());
             Assert.NotNull(node.Declaration);
             Assert.Equal(SyntaxKind.SemicolonToken, node.SemicolonToken.Kind());
@@ -11956,14 +11598,14 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateMethodDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.TypeParameterList);
             Assert.NotNull(node.ParameterList);
-            Assert.NotNull(node.ConstraintClauses);
+            Assert.Equal(default, node.ConstraintClauses);
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
             Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
@@ -11976,8 +11618,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateOperatorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.ReturnType);
             Assert.Equal(SyntaxKind.OperatorKeyword, node.OperatorKeyword.Kind());
             Assert.Equal(SyntaxKind.PlusToken, node.OperatorToken.Kind());
@@ -11994,8 +11636,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateConversionOperatorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.ImplicitKeyword, node.ImplicitOrExplicitKeyword.Kind());
             Assert.Equal(SyntaxKind.OperatorKeyword, node.OperatorKeyword.Kind());
             Assert.NotNull(node.Type);
@@ -12012,8 +11654,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateConstructorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.NotNull(node.ParameterList);
             Assert.Null(node.Initializer);
@@ -12041,8 +11683,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDestructorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.TildeToken, node.TildeToken.Kind());
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.NotNull(node.ParameterList);
@@ -12058,8 +11700,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GeneratePropertyDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
@@ -12087,14 +11729,15 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateEventDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.EventKeyword, node.EventKeyword.Kind());
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
-            Assert.NotNull(node.AccessorList);
-            var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithEventKeyword(node.EventKeyword).WithType(node.Type).WithExplicitInterfaceSpecifier(node.ExplicitInterfaceSpecifier).WithIdentifier(node.Identifier).WithAccessorList(node.AccessorList);
+            Assert.Null(node.AccessorList);
+            Assert.Equal(SyntaxKind.None, node.SemicolonToken.Kind());
+            var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithEventKeyword(node.EventKeyword).WithType(node.Type).WithExplicitInterfaceSpecifier(node.ExplicitInterfaceSpecifier).WithIdentifier(node.Identifier).WithAccessorList(node.AccessorList).WithSemicolonToken(node.SemicolonToken);
             Assert.Equal(node, newNode);
         }
         
@@ -12103,8 +11746,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateIndexerDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.NotNull(node.Type);
             Assert.Null(node.ExplicitInterfaceSpecifier);
             Assert.Equal(SyntaxKind.ThisKeyword, node.ThisKeyword.Kind());
@@ -12122,7 +11765,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateAccessorList();
             
             Assert.Equal(SyntaxKind.OpenBraceToken, node.OpenBraceToken.Kind());
-            Assert.NotNull(node.Accessors);
+            Assert.Equal(default, node.Accessors);
             Assert.Equal(SyntaxKind.CloseBraceToken, node.CloseBraceToken.Kind());
             var newNode = node.WithOpenBraceToken(node.OpenBraceToken).WithAccessors(node.Accessors).WithCloseBraceToken(node.CloseBraceToken);
             Assert.Equal(node, newNode);
@@ -12133,8 +11776,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateAccessorDeclaration();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Equal(SyntaxKind.GetKeyword, node.Keyword.Kind());
             Assert.Null(node.Body);
             Assert.Null(node.ExpressionBody);
@@ -12149,7 +11792,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateParameterList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithParameters(node.Parameters).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -12161,7 +11804,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateBracketedParameterList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
             var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithParameters(node.Parameters).WithCloseBracketToken(node.CloseBracketToken);
             Assert.Equal(node, newNode);
@@ -12172,8 +11815,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateParameter();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Null(node.Type);
             Assert.Equal(SyntaxKind.IdentifierToken, node.Identifier.Kind());
             Assert.Null(node.Default);
@@ -12186,8 +11829,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateIncompleteMember();
             
-            Assert.NotNull(node.AttributeLists);
-            Assert.NotNull(node.Modifiers);
+            Assert.Equal(default, node.AttributeLists);
+            Assert.Equal(default, node.Modifiers);
             Assert.Null(node.Type);
             var newNode = node.WithAttributeLists(node.AttributeLists).WithModifiers(node.Modifiers).WithType(node.Type);
             Assert.Equal(node, newNode);
@@ -12198,7 +11841,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateSkippedTokensTrivia();
             
-            Assert.NotNull(node.Tokens);
+            Assert.Equal(default, node.Tokens);
             var newNode = node.WithTokens(node.Tokens);
             Assert.Equal(node, newNode);
         }
@@ -12208,7 +11851,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateDocumentationCommentTrivia();
             
-            Assert.NotNull(node.Content);
+            Assert.Equal(default, node.Content);
             Assert.Equal(SyntaxKind.EndOfDocumentationCommentToken, node.EndOfComment.Kind());
             var newNode = node.WithContent(node.Content).WithEndOfComment(node.EndOfComment);
             Assert.Equal(node, newNode);
@@ -12289,7 +11932,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateCrefParameterList();
             
             Assert.Equal(SyntaxKind.OpenParenToken, node.OpenParenToken.Kind());
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseParenToken, node.CloseParenToken.Kind());
             var newNode = node.WithOpenParenToken(node.OpenParenToken).WithParameters(node.Parameters).WithCloseParenToken(node.CloseParenToken);
             Assert.Equal(node, newNode);
@@ -12301,7 +11944,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateCrefBracketedParameterList();
             
             Assert.Equal(SyntaxKind.OpenBracketToken, node.OpenBracketToken.Kind());
-            Assert.NotNull(node.Parameters);
+            Assert.Equal(default, node.Parameters);
             Assert.Equal(SyntaxKind.CloseBracketToken, node.CloseBracketToken.Kind());
             var newNode = node.WithOpenBracketToken(node.OpenBracketToken).WithParameters(node.Parameters).WithCloseBracketToken(node.CloseBracketToken);
             Assert.Equal(node, newNode);
@@ -12324,7 +11967,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlElement();
             
             Assert.NotNull(node.StartTag);
-            Assert.NotNull(node.Content);
+            Assert.Equal(default, node.Content);
             Assert.NotNull(node.EndTag);
             var newNode = node.WithStartTag(node.StartTag).WithContent(node.Content).WithEndTag(node.EndTag);
             Assert.Equal(node, newNode);
@@ -12337,7 +11980,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind());
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.GreaterThanToken, node.GreaterThanToken.Kind());
             var newNode = node.WithLessThanToken(node.LessThanToken).WithName(node.Name).WithAttributes(node.Attributes).WithGreaterThanToken(node.GreaterThanToken);
             Assert.Equal(node, newNode);
@@ -12362,7 +12005,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.LessThanToken, node.LessThanToken.Kind());
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.Attributes);
+            Assert.Equal(default, node.Attributes);
             Assert.Equal(SyntaxKind.SlashGreaterThanToken, node.SlashGreaterThanToken.Kind());
             var newNode = node.WithLessThanToken(node.LessThanToken).WithName(node.Name).WithAttributes(node.Attributes).WithSlashGreaterThanToken(node.SlashGreaterThanToken);
             Assert.Equal(node, newNode);
@@ -12398,7 +12041,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.NotNull(node.Name);
             Assert.Equal(SyntaxKind.EqualsToken, node.EqualsToken.Kind());
             Assert.Equal(SyntaxKind.SingleQuoteToken, node.StartQuoteToken.Kind());
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.SingleQuoteToken, node.EndQuoteToken.Kind());
             var newNode = node.WithName(node.Name).WithEqualsToken(node.EqualsToken).WithStartQuoteToken(node.StartQuoteToken).WithTextTokens(node.TextTokens).WithEndQuoteToken(node.EndQuoteToken);
             Assert.Equal(node, newNode);
@@ -12437,7 +12080,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         {
             var node = GenerateXmlText();
             
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             var newNode = node.WithTextTokens(node.TextTokens);
             Assert.Equal(node, newNode);
         }
@@ -12448,7 +12091,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlCDataSection();
             
             Assert.Equal(SyntaxKind.XmlCDataStartToken, node.StartCDataToken.Kind());
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlCDataEndToken, node.EndCDataToken.Kind());
             var newNode = node.WithStartCDataToken(node.StartCDataToken).WithTextTokens(node.TextTokens).WithEndCDataToken(node.EndCDataToken);
             Assert.Equal(node, newNode);
@@ -12461,7 +12104,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             
             Assert.Equal(SyntaxKind.XmlProcessingInstructionStartToken, node.StartProcessingInstructionToken.Kind());
             Assert.NotNull(node.Name);
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlProcessingInstructionEndToken, node.EndProcessingInstructionToken.Kind());
             var newNode = node.WithStartProcessingInstructionToken(node.StartProcessingInstructionToken).WithName(node.Name).WithTextTokens(node.TextTokens).WithEndProcessingInstructionToken(node.EndProcessingInstructionToken);
             Assert.Equal(node, newNode);
@@ -12473,7 +12116,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             var node = GenerateXmlComment();
             
             Assert.Equal(SyntaxKind.XmlCommentStartToken, node.LessThanExclamationMinusMinusToken.Kind());
-            Assert.NotNull(node.TextTokens);
+            Assert.Equal(default, node.TextTokens);
             Assert.Equal(SyntaxKind.XmlCommentEndToken, node.MinusMinusGreaterThanToken.Kind());
             var newNode = node.WithLessThanExclamationMinusMinusToken(node.LessThanExclamationMinusMinusToken).WithTextTokens(node.TextTokens).WithMinusMinusGreaterThanToken(node.MinusMinusGreaterThanToken);
             Assert.Equal(node, newNode);
@@ -12655,7 +12298,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.PragmaKeyword, node.PragmaKeyword.Kind());
             Assert.Equal(SyntaxKind.WarningKeyword, node.WarningKeyword.Kind());
             Assert.Equal(SyntaxKind.DisableKeyword, node.DisableOrRestoreKeyword.Kind());
-            Assert.NotNull(node.ErrorCodes);
+            Assert.Equal(default, node.ErrorCodes);
             Assert.Equal(SyntaxKind.EndOfDirectiveToken, node.EndOfDirectiveToken.Kind());
             Assert.Equal(new bool(), node.IsActive);
             var newNode = node.WithHashToken(node.HashToken).WithPragmaKeyword(node.PragmaKeyword).WithWarningKeyword(node.WarningKeyword).WithDisableOrRestoreKeyword(node.DisableOrRestoreKeyword).WithErrorCodes(node.ErrorCodes).WithEndOfDirectiveToken(node.EndOfDirectiveToken).WithIsActive(node.IsActive);
@@ -12728,9 +12371,10 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.HashToken, node.HashToken.Kind());
             Assert.Equal(SyntaxKind.NullableKeyword, node.NullableKeyword.Kind());
             Assert.Equal(SyntaxKind.EnableKeyword, node.SettingToken.Kind());
+            Assert.Equal(SyntaxKind.None, node.TargetToken.Kind());
             Assert.Equal(SyntaxKind.EndOfDirectiveToken, node.EndOfDirectiveToken.Kind());
             Assert.Equal(new bool(), node.IsActive);
-            var newNode = node.WithHashToken(node.HashToken).WithNullableKeyword(node.NullableKeyword).WithSettingToken(node.SettingToken).WithEndOfDirectiveToken(node.EndOfDirectiveToken).WithIsActive(node.IsActive);
+            var newNode = node.WithHashToken(node.HashToken).WithNullableKeyword(node.NullableKeyword).WithSettingToken(node.SettingToken).WithTargetToken(node.TargetToken).WithEndOfDirectiveToken(node.EndOfDirectiveToken).WithIsActive(node.IsActive);
             Assert.Equal(node, newNode);
         }
         #endregion Red Factory and Property Tests
@@ -14687,6 +14331,32 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         }
         
         [Fact]
+        public void TestDiscardPatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateDiscardPattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestDiscardPatternIdentityRewriter()
+        {
+            var oldNode = GenerateDiscardPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
         public void TestDeclarationPatternTokenDeleteRewriter()
         {
             var oldNode = GenerateDeclarationPattern();
@@ -14706,6 +14376,136 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestDeclarationPatternIdentityRewriter()
         {
             var oldNode = GenerateDeclarationPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestVarPatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateVarPattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestVarPatternIdentityRewriter()
+        {
+            var oldNode = GenerateVarPattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestRecursivePatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateRecursivePattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestRecursivePatternIdentityRewriter()
+        {
+            var oldNode = GenerateRecursivePattern();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseTokenDeleteRewriter()
+        {
+            var oldNode = GeneratePositionalPatternClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestPositionalPatternClauseIdentityRewriter()
+        {
+            var oldNode = GeneratePositionalPatternClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseTokenDeleteRewriter()
+        {
+            var oldNode = GeneratePropertyPatternClause();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestPropertyPatternClauseIdentityRewriter()
+        {
+            var oldNode = GeneratePropertyPatternClause();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSubpatternTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSubpattern();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSubpatternIdentityRewriter()
+        {
+            var oldNode = GenerateSubpattern();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             
@@ -15772,6 +15572,58 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
         public void TestDefaultSwitchLabelIdentityRewriter()
         {
             var oldNode = GenerateDefaultSwitchLabel();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSwitchExpression();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionIdentityRewriter()
+        {
+            var oldNode = GenerateSwitchExpression();
+            var rewriter = new IdentityRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            Assert.Same(oldNode, newNode);
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmTokenDeleteRewriter()
+        {
+            var oldNode = GenerateSwitchExpressionArm();
+            var rewriter = new TokenDeleteRewriter();
+            var newNode = rewriter.Visit(oldNode);
+            
+            if(!oldNode.IsMissing)
+            {
+                Assert.NotEqual(oldNode, newNode);
+            }
+            
+            Assert.NotNull(newNode);
+            Assert.True(newNode.IsMissing, "No tokens => missing");
+        }
+        
+        [Fact]
+        public void TestSwitchExpressionArmIdentityRewriter()
+        {
+            var oldNode = GenerateSwitchExpressionArm();
             var rewriter = new IdentityRewriter();
             var newNode = rewriter.Visit(oldNode);
             

@@ -12,16 +12,14 @@ namespace Microsoft.CodeAnalysis.Formatting
         public FormattingDiagnosticAnalyzer()
             : base(
                 IDEDiagnosticIds.FormattingDiagnosticId,
+                option: null,   // No unique option to configure diagnosticId
                 new LocalizableResourceString(nameof(FeaturesResources.Fix_formatting), FeaturesResources.ResourceManager, typeof(FeaturesResources)),
                 new LocalizableResourceString(nameof(FeaturesResources.Fix_formatting), FeaturesResources.ResourceManager, typeof(FeaturesResources)))
         {
         }
 
         public override DiagnosticAnalyzerCategory GetAnalyzerCategory()
-            => DiagnosticAnalyzerCategory.SyntaxAnalysis;
-
-        public override bool OpenFileOnly(Workspace workspace)
-            => false;
+            => DiagnosticAnalyzerCategory.SyntaxTreeWithoutSemanticsAnalysis;
 
         protected override void InitializeWorker(AnalysisContext context)
             => context.RegisterSyntaxTreeAction(AnalyzeSyntaxTree);

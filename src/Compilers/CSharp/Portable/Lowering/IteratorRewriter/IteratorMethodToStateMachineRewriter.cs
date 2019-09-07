@@ -152,7 +152,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
             else
             {
-                var stateLocal = F.SynthesizedLocal(stateField.Type.TypeSymbol);
+                var stateLocal = F.SynthesizedLocal(stateField.Type);
                 var state = F.Local(stateLocal);
 
                 var disposeBody = F.Block(
@@ -252,7 +252,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                                     F.Goto(breakLabel));
 
                 body = F.Block(
-                    F.Switch(state, sections),
+                    F.Switch(state, sections.ToImmutableArray()),
                     F.Label(breakLabel));
             }
 
@@ -315,6 +315,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             //     this.state = <next_state>;
             //     return true;
             //     <next_state_label>: ;
+            //     <hidden sequence point>
             //     this.state = finalizeState;
             int stateNumber;
             GeneratedLabelSymbol resumeLabel;

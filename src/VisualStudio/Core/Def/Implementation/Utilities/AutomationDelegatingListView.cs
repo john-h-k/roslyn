@@ -69,6 +69,11 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Utilities
 
             return results;
         }
+
+        protected override AutomationControlType GetAutomationControlTypeCore()
+        {
+            return AutomationControlType.List;
+        }
     }
 
     internal class AutomationDelegatingListViewItem : ListViewItem
@@ -81,9 +86,9 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Utilities
 
     internal class AutomationDelegatingListViewItemAutomationPeer : ListBoxItemWrapperAutomationPeer
     {
-        private CheckBoxAutomationPeer checkBoxItem;
-        private RadioButtonAutomationPeer radioButtonItem;
-        private TextBlockAutomationPeer textBlockItem;
+        private readonly CheckBoxAutomationPeer checkBoxItem;
+        private readonly RadioButtonAutomationPeer radioButtonItem;
+        private readonly TextBlockAutomationPeer textBlockItem;
 
         public AutomationDelegatingListViewItemAutomationPeer(AutomationDelegatingListViewItem listViewItem)
             : base(listViewItem)

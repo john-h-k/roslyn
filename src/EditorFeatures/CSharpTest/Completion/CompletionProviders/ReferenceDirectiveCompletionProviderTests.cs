@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,20 +27,22 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionPr
             return new ReferenceDirectiveCompletionProvider();
         }
 
-        protected override bool CompareItems(string actualItem, string expectedItem)
+        protected override IEqualityComparer<string> GetStringComparer()
         {
-            return actualItem.Equals(expectedItem, StringComparison.OrdinalIgnoreCase);
+            return StringComparer.OrdinalIgnoreCase;
         }
 
-        protected override Task VerifyWorkerAsync(
+        private protected override Task VerifyWorkerAsync(
             string code, int position, string expectedItemOrNull, string expectedDescriptionOrNull,
             SourceCodeKind sourceCodeKind, bool usePreviousCharAsTrigger, bool checkForAbsence,
-            int? glyph, int? matchPriority, bool? hasSuggestionItem, string displayTextSuffix)
+            int? glyph, int? matchPriority, bool? hasSuggestionItem, string displayTextSuffix,
+            string inlineDescription = null, List<CompletionItemFilter> matchingFilters = null)
         {
             return BaseVerifyWorkerAsync(
                 code, position, expectedItemOrNull, expectedDescriptionOrNull,
                 sourceCodeKind, usePreviousCharAsTrigger, checkForAbsence,
-                glyph, matchPriority, hasSuggestionItem, displayTextSuffix);
+                glyph, matchPriority, hasSuggestionItem, displayTextSuffix,
+                inlineDescription, matchingFilters);
         }
 
         [Fact]

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CodeGen;
@@ -11,8 +12,9 @@ namespace Microsoft.CodeAnalysis.CSharp
 {
     /// <summary>
     /// Produces a MoveNext() method for an async-iterator method.
-    /// Compared to an async method, this handles rewriting `yield return` and
+    /// Compared to an async method, this handles rewriting `yield return` (with states decreasing from -3) and
     /// `yield break`, and adds special handling for `try` to allow disposal.
+    /// `await` is handled like in async methods (with states 0 and up).
     /// </summary>
     internal sealed class AsyncIteratorMethodToStateMachineRewriter : AsyncMethodToStateMachineRewriter
     {
@@ -26,10 +28,15 @@ namespace Microsoft.CodeAnalysis.CSharp
         private LabelSymbol _enclosingFinallyOrExitLabel;
 
         /// <summary>
-        /// We use _exprReturnLabel for normal end of method (ie. no more values).
+        /// We use _exprReturnLabel for normal end of method (ie. no more values) and `yield break;`.
         /// We use _exprReturnLabelTrue for `yield return;`.
         /// </summary>
         private readonly LabelSymbol _exprReturnLabelTrue;
+
+        /// <summary>
+        /// States for `yield return` are decreasing from -3.
+        /// </summary>
+        private int _nextYieldReturnState = StateMachineStates.InitialAsyncIteratorStateMachine;  // -3
 
         internal AsyncIteratorMethodToStateMachineRewriter(MethodSymbol method,
             int methodOrdinal,
@@ -60,6 +67,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             // ... _exprReturnLabel: ...
             // ... this.state = FinishedState; ...
 
+            // if (this.combinedTokens != null) { this.combinedTokens.Dispose(); this.combinedTokens = null; } // for enumerables only
             // this.promiseOfValueOrEnd.SetResult(false);
             // return;
             // _exprReturnLabelTrue:
@@ -68,13 +76,20 @@ namespace Microsoft.CodeAnalysis.CSharp
             // ... _exitLabel: ...
             // ... return; ...
 
-            return F.Block(
+            var builder = ArrayBuilder<BoundStatement>.GetInstance();
+
+            // if (this.combinedTokens != null) { this.combinedTokens.Dispose(); this.combinedTokens = null; } // for enumerables only
+            AddDisposeCombinedTokensIfNeeded(builder);
+
+            builder.AddRange(
                 // this.promiseOfValueOrEnd.SetResult(false);
                 generateSetResultOnPromise(false),
                 F.Return(),
                 F.Label(_exprReturnLabelTrue),
                 // this.promiseOfValueOrEnd.SetResult(true);
                 generateSetResultOnPromise(true));
+
+            return F.Block(builder.ToImmutableAndFree());
 
             BoundExpressionStatement generateSetResultOnPromise(bool result)
             {
@@ -85,13 +100,36 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
+        private void AddDisposeCombinedTokensIfNeeded(ArrayBuilder<BoundStatement> builder)
+        {
+            // if (this.combinedTokens != null) { this.combinedTokens.Dispose(); this.combinedTokens = null; } // for enumerables only
+            if (_asyncIteratorInfo.CombinedTokensField is object)
+            {
+                var combinedTokens = F.Field(F.This(), _asyncIteratorInfo.CombinedTokensField);
+                TypeSymbol combinedTokensType = combinedTokens.Type;
+
+                builder.Add(
+                    F.If(F.ObjectNotEqual(combinedTokens, F.Null(combinedTokensType)),
+                        thenClause: F.Block(
+                            F.ExpressionStatement(F.Call(combinedTokens, F.WellKnownMethod(WellKnownMember.System_Threading_CancellationTokenSource__Dispose))),
+                            F.Assignment(combinedTokens, F.Null(combinedTokensType)))));
+            }
+        }
+
         protected override BoundStatement GenerateSetExceptionCall(LocalSymbol exceptionLocal)
         {
+            var builder = ArrayBuilder<BoundStatement>.GetInstance();
+
+            // if (this.combinedTokens != null) { this.combinedTokens.Dispose(); this.combinedTokens = null; } // for enumerables only
+            AddDisposeCombinedTokensIfNeeded(builder);
+
             // _promiseOfValueOrEnd.SetException(ex);
-            return F.ExpressionStatement(F.Call(
+            builder.Add(F.ExpressionStatement(F.Call(
                 F.InstanceField(_asyncIteratorInfo.PromiseOfValueOrEndField),
                 _asyncIteratorInfo.SetExceptionMethod,
-                F.Local(exceptionLocal)));
+                F.Local(exceptionLocal))));
+
+            return F.Block(builder.ToImmutableAndFree());
         }
 
         private BoundStatement GenerateJumpToCurrentFinallyOrExit()
@@ -114,14 +152,44 @@ namespace Microsoft.CodeAnalysis.CSharp
                 GenerateJumpToCurrentFinallyOrExit());
         }
 
+        protected override BoundBinaryOperator ShouldEnterFinallyBlock()
+        {
+            // We should skip the finally block when:
+            // - the state is 0 or greater (we're suspending on an `await`)
+            // - the state is -3, -4 or lower (we're suspending on a `yield return`)
+            // We don't care about state = -2 (method already completed)
+
+            // So we only want to enter the finally when the state is -1
+            return F.IntEqual(F.Local(cachedState), F.Literal(StateMachineStates.NotStartedStateMachine));
+        }
+
         #region Visitors
 
+        /// <summary>
+        /// Lower the body, adding an entry state (-3) at the start,
+        /// so that we can differentiate an async-iterator that was never moved forward with MoveNextAsync()
+        /// from one that is running (-1).
+        /// Then we can guard against some bad usages of DisposeAsync.
+        /// </summary>
         protected override BoundStatement VisitBody(BoundStatement body)
         {
+            // Produce:
+            //  initialStateResumeLabel:
+            //  if (disposeMode) goto _exprReturnLabel;
+            //  this.state = cachedState = -1;
+            //  ... rewritten body
+
+            var initialState = _nextYieldReturnState--;
+            Debug.Assert(initialState == -3);
+            AddState(initialState, out GeneratedLabelSymbol resumeLabel);
+
+            var rewrittenBody = (BoundStatement)Visit(body);
+
             return F.Block(
-                // disposeMode = false;
-                SetDisposeMode(false),
-                (BoundStatement)Visit(body));
+                F.Label(resumeLabel), // initialStateResumeLabel:
+                GenerateJumpToCurrentFinallyOrExit(), // if (disposeMode) goto _exprReturnLabel;
+                GenerateSetBothStates(StateMachineStates.NotStartedStateMachine), // this.state = cachedState = -1;
+                rewrittenBody);
         }
 
         public override BoundNode VisitYieldReturnStatement(BoundYieldReturnStatement node)
@@ -131,6 +199,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             //     _state = <next_state>;
             //     goto _exprReturnLabelTrue;
             //     <next_state_label>: ;
+            //     <hidden sequence point>
             //     this.state = cachedState = NotStartedStateMachine;
             //     if (disposeMode) goto _enclosingFinallyOrExitLabel;
 
@@ -138,7 +207,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             //  _promiseOfValueOrEnd.SetResult(true);
             //  return;
 
-            AddState(out int stateNumber, out GeneratedLabelSymbol resumeLabel);
+            var stateNumber = _nextYieldReturnState--;
+            AddState(stateNumber, out GeneratedLabelSymbol resumeLabel);
 
             var rewrittenExpression = (BoundExpression)Visit(node.Expression);
             var blockBuilder = ArrayBuilder<BoundStatement>.GetInstance();
@@ -158,6 +228,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             blockBuilder.Add(
                 // <next_state_label>: ;
                 F.Label(resumeLabel));
+
+            blockBuilder.Add(F.HiddenSequencePoint());
 
             blockBuilder.Add(
                 // this.state = cachedState = NotStartedStateMachine
@@ -200,8 +272,8 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// to restore execution from a given state, without executing other code to get there).
         ///
         /// From there, we don't want normal code flow:
-        /// - from `yield return`, we'll jump to the relevant `finally` (or method exit)
-        /// - after finishing a `finally`, we'll jump to the next relevant `finally` (or method exit)
+        /// - from `yield return`, we'll jump to the enclosing `finally` (or method exit)
+        /// - after finishing a `finally`, we'll jump to the next enclosing `finally` (or method exit)
         ///
         /// Some `finally` clauses may have already been rewritten and extracted to a plain block (<see cref="AsyncExceptionHandlerRewriter"/>).
         /// In those cases, we saved the finally-entry label in <see cref="BoundTryStatement.FinallyLabelOpt"/>.

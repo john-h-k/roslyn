@@ -709,8 +709,7 @@ sequencePoints: "C.F");
   IL_0099:  call       ""void System.Runtime.CompilerServices.AsyncTaskMethodBuilder<int>.SetResult(int)""
   IL_009e:  nop
   IL_009f:  ret
-}
-", sequencePoints: "C+<F>d__0.MoveNext");
+}", sequencePoints: "C+<F>d__0.MoveNext");
         }
 
         [WorkItem(836491, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/836491")]

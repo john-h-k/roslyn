@@ -20,17 +20,12 @@ namespace Microsoft.CodeAnalysis
         IgnoreDynamicAndTupleNames = IgnoreDynamic | IgnoreTupleNames,
 
         IgnoreNullableModifiersForReferenceTypes = 8,
-        UnknownNullableModifierMatchesAny = 16,
+        ObliviousNullableModifierMatchesAny = 16,
 
-        /// <summary>
-        /// Different flavors of Nullable are equivalent,
-        /// different flavors of Not-Nullable are equivalent unless the type is possibly nullable reference type parameter.
-        /// This option can cause cycles in binding if used too early!
-        /// </summary>
-        IgnoreInsignificantNullableModifiersDifference = 32,
-
-        AllNullableIgnoreOptions = IgnoreNullableModifiersForReferenceTypes | UnknownNullableModifierMatchesAny | IgnoreInsignificantNullableModifiersDifference,
+        AllNullableIgnoreOptions = IgnoreNullableModifiersForReferenceTypes | ObliviousNullableModifierMatchesAny,
         AllIgnoreOptions = IgnoreCustomModifiersAndArraySizesAndLowerBounds | IgnoreDynamic | IgnoreTupleNames | AllNullableIgnoreOptions,
-        AllIgnoreOptionsForVB = IgnoreCustomModifiersAndArraySizesAndLowerBounds | IgnoreTupleNames
+        AllIgnoreOptionsForVB = IgnoreCustomModifiersAndArraySizesAndLowerBounds | IgnoreTupleNames,
+
+        CLRSignatureCompareOptions = TypeCompareKind.AllIgnoreOptions & ~TypeCompareKind.IgnoreCustomModifiersAndArraySizesAndLowerBounds,
     }
 }

@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
@@ -598,7 +597,6 @@ class TestCase
         if ((int)(object)y == 1)
             count++;
     }
-
 }
 
 class Driver
@@ -783,7 +781,6 @@ class TestCase
             Driver.CompleteSignal.Set();
         }
     }
-
 }
 
 class Driver
@@ -2259,7 +2256,6 @@ class Test
 ");
         }
 
-
         [Fact]
         public void AsyncStateMachineIL_Class_TaskT()
         {
@@ -2407,8 +2403,7 @@ class Test
   IL_00c6:  call       ""void System.Runtime.CompilerServices.AsyncTaskMethodBuilder<int>.SetResult(int)""
   IL_00cb:  nop
   IL_00cc:  ret
-}
-", sequencePoints: "Test+<F>d__0.MoveNext");
+}", sequencePoints: "Test+<F>d__0.MoveNext");
 
             c.VerifyIL("Test.<F>d__0.System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine", @"
 {
@@ -3433,7 +3428,6 @@ namespace System.Runtime.CompilerServices { class AsyncMethodBuilderAttribute : 
                 );
         }
 
-
         [Fact]
         public void AsyncTasklikeBadAttributeArgument2()
         {
@@ -3548,7 +3542,6 @@ class Program {
                 );
         }
 
-
         [Fact]
         public void AsyncTasklikeCreateMethod()
         {
@@ -3648,7 +3641,6 @@ namespace System.Runtime.CompilerServices {{ class AsyncMethodBuilderAttribute :
                 );
         }
 
-
         [Fact]
         public void AsyncTasklikeBuilderAccessibility()
         {
@@ -3687,7 +3679,6 @@ namespace System.Runtime.CompilerServices {{ class AsyncMethodBuilderAttribute :
                 Diagnostic(ErrorCode.ERR_BadAsyncReturn, "=> await Task.Delay(3)").WithLocation(67, 19)
                 );
         }
-
 
         [Fact]
         public void AsyncTasklikeLambdaOverloads()
@@ -4474,8 +4465,7 @@ class Program
     IL_000d:  leave.s    IL_000f
   }
   IL_000f:  ret
-}
-");
+}");
         }
 
         [Fact, WorkItem(4839, "https://github.com/dotnet/roslyn/issues/4839")]
@@ -4803,7 +4793,6 @@ class C
                 //     async Task GetNumber(Task task) { await task; }
                 Diagnostic(ErrorCode.ERR_MissingPredefinedMember, "{ await task; }").WithArguments("System.Runtime.CompilerServices.IAsyncStateMachine", "SetStateMachine").WithLocation(62, 37));
         }
-
 
         [Fact, WorkItem(16531, "https://github.com/dotnet/roslyn/issues/16531")]
         public void ArityMismatch()

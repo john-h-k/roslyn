@@ -9,6 +9,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using DiffPlex;
+using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Xunit;
 
@@ -208,6 +211,48 @@ namespace Roslyn.Test.Utilities
             }
 
             Assert.True(false, assertMessage);
+        }
+
+        /// <summary>
+        /// Asserts that two strings are equal, and prints a diff between the two if they are not.
+        /// </summary>
+        /// <param name="expected">The expected string. This is presented as the "baseline/before" side in the diff.</param>
+        /// <param name="actual">The actual string. This is presented as the changed or "after" side in the diff.</param>
+        /// <param name="message">The message to precede the diff, if the values are not equal.</param>
+        public static void EqualOrDiff(string expected, string actual, string message = null)
+        {
+            if (expected == actual)
+            {
+                return;
+            }
+
+            var diffBuilder = new InlineDiffBuilder(new Differ());
+            var diff = diffBuilder.BuildDiffModel(expected, actual, ignoreWhitespace: false);
+            var messageBuilder = new StringBuilder();
+            messageBuilder.AppendLine(
+                string.IsNullOrEmpty(message)
+                    ? "Actual and expected values differ. Expected shown in baseline of diff:"
+                    : message);
+
+            foreach (var line in diff.Lines)
+            {
+                switch (line.Type)
+                {
+                    case ChangeType.Inserted:
+                        messageBuilder.Append("+");
+                        break;
+                    case ChangeType.Deleted:
+                        messageBuilder.Append("-");
+                        break;
+                    default:
+                        messageBuilder.Append(" ");
+                        break;
+                }
+
+                messageBuilder.AppendLine(line.Text);
+            }
+
+            Assert.True(false, messageBuilder.ToString());
         }
 
         public static void NotEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, IEqualityComparer<T> comparer = null, string message = null,
@@ -545,7 +590,7 @@ namespace Roslyn.Test.Utilities
         {
             if (itemInspector == null)
             {
-                if (expected is IEnumerable<byte>)
+                if (typeof(T) == typeof(byte))
                 {
                     itemInspector = b => $"0x{b:X2}";
                 }
@@ -557,7 +602,7 @@ namespace Roslyn.Test.Utilities
 
             if (itemSeparator == null)
             {
-                if (expected is IEnumerable<byte>)
+                if (typeof(T) == typeof(byte))
                 {
                     itemSeparator = ", ";
                 }
@@ -672,6 +717,53 @@ namespace Roslyn.Test.Utilities
 
                 Assert.Equal(typeof(TException), e.GetType());
                 checker?.Invoke((TException)e);
+            }
+        }
+
+        public static void Equal(bool[,] expected, Func<int, int, bool> getResult, int size)
+        {
+            Equal<bool>(expected, getResult, (b1, b2) => b1 == b2, b => b ? "true" : "false", "{0,-6:G}", size);
+        }
+
+        public static void Equal<T>(T[,] expected, Func<int, int, T> getResult, Func<T, T, bool> valuesEqual, Func<T, string> printValue, string format, int size)
+        {
+            bool mismatch = false;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    if (!valuesEqual(expected[i, j], getResult(i, j)))
+                    {
+                        mismatch = true;
+                    }
+                }
+            }
+
+            if (mismatch)
+            {
+                var builder = new StringBuilder();
+                builder.AppendLine("Actual result: ");
+                for (int i = 0; i < size; i++)
+                {
+                    builder.Append("{ ");
+                    for (int j = 0; j < size; j++)
+                    {
+                        string resultWithComma = printValue(getResult(i, j));
+                        if (j < size - 1)
+                        {
+                            resultWithComma += ",";
+                        }
+
+                        builder.Append(string.Format(format, resultWithComma));
+                        if (j < size - 1)
+                        {
+                            builder.Append(' ');
+                        }
+                    }
+                    builder.AppendLine("},");
+                }
+
+                Assert.True(false, builder.ToString());
             }
         }
     }

@@ -1,9 +1,11 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CodeGen;
+using Microsoft.CodeAnalysis.Collections;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Roslyn.Utilities;
@@ -23,7 +25,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         protected FieldSymbol stateField;
         protected IReadOnlyDictionary<Symbol, CapturedSymbolReplacement> nonReusableLocalProxies;
         protected int nextFreeHoistedLocalSlot;
-        protected IReadOnlySet<Symbol> hoistedVariables;
+        protected IOrderedReadOnlySet<Symbol> hoistedVariables;
         protected Dictionary<Symbol, CapturedSymbolReplacement> initialParameters;
         protected FieldSymbol initialThreadIdField;
 
@@ -105,6 +107,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             // fields for the captured variables of the method
             var variablesToHoist = IteratorAndAsyncCaptureWalker.Analyze(F.Compilation, method, body, diagnostics);
 
+            if (diagnostics.HasAnyErrors())
+            {
+                // Avoid triggering assertions in further lowering.
+                return new BoundBadStatement(F.Syntax, ImmutableArray<BoundNode>.Empty, hasErrors: true);
+            }
+
             CreateNonReusableLocalProxies(variablesToHoist, out this.nonReusableLocalProxies, out this.nextFreeHoistedLocalSlot);
 
             this.hoistedVariables = variablesToHoist;
@@ -151,7 +159,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     if (local.RefKind != RefKind.None)
                     {
                         // we'll create proxies for these variables later:
-                        Debug.Assert(synthesizedKind == SynthesizedLocalKind.AwaitSpill);
+                        Debug.Assert(synthesizedKind == SynthesizedLocalKind.Spill);
                         continue;
                     }
 
@@ -161,19 +169,19 @@ namespace Microsoft.CodeAnalysis.CSharp
                     if (ShouldPreallocateNonReusableProxy(local))
                     {
                         // variable needs to be hoisted
-                        var fieldType = typeMap.SubstituteType(local.Type.TypeSymbol).TypeSymbol;
+                        var fieldType = typeMap.SubstituteType(local.Type).Type;
 
                         LocalDebugId id;
                         int slotIndex = -1;
 
                         if (isDebugBuild)
                         {
-                            // Calculate local debug id. 
+                            // Calculate local debug id.
                             //
                             // EnC: When emitting the baseline (gen 0) the id is stored in a custom debug information attached to the kickoff method.
                             //      When emitting a delta the id is only used to map to the existing field in the previous generation.
                             SyntaxNode declaratorSyntax = local.GetDeclaratorSyntax();
-                            int syntaxOffset = this.method.CalculateLocalSyntaxOffset(declaratorSyntax.SpanStart, declaratorSyntax.SyntaxTree);
+                            int syntaxOffset = method.CalculateLocalSyntaxOffset(LambdaUtilities.GetDeclaratorPosition(declaratorSyntax), declaratorSyntax.SyntaxTree);
                             int ordinal = synthesizedLocalOrdinals.AssignLocalOrdinal(synthesizedKind, syntaxOffset);
                             id = new LocalDebugId(syntaxOffset, ordinal);
 
@@ -228,14 +236,14 @@ namespace Microsoft.CodeAnalysis.CSharp
                     }
                     else
                     {
-                        // The field needs to be public iff it is initialized directly from the kickoff method 
+                        // The field needs to be public iff it is initialized directly from the kickoff method
                         // (i.e. not for IEnumerable which loads the values from parameter proxies).
-                        var proxyField = F.StateMachineField(typeMap.SubstituteType(parameter.Type.TypeSymbol).TypeSymbol, parameter.Name, isPublic: !PreserveInitialParameterValuesAndThreadId);
+                        var proxyField = F.StateMachineField(typeMap.SubstituteType(parameter.Type).Type, parameter.Name, isPublic: !PreserveInitialParameterValuesAndThreadId);
                         proxiesBuilder.Add(parameter, new CapturedToStateMachineFieldReplacement(proxyField, isReusable: false));
 
                         if (PreserveInitialParameterValuesAndThreadId)
                         {
-                            var field = F.StateMachineField(typeMap.SubstituteType(parameter.Type.TypeSymbol).TypeSymbol, GeneratedNames.StateMachineParameterProxyFieldName(parameter.Name), isPublic: true);
+                            var field = F.StateMachineField(typeMap.SubstituteType(parameter.Type).Type, GeneratedNames.StateMachineParameterProxyFieldName(parameter.Name), isPublic: true);
                             initialParameters.Add(parameter, new CapturedToStateMachineFieldReplacement(field, isReusable: false));
                         }
                     }
@@ -266,7 +274,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             F.CurrentFunction = method;
             var bodyBuilder = ArrayBuilder<BoundStatement>.GetInstance();
 
-            var frameType = method.IsGenericMethod ? stateMachineType.Construct(method.TypeArguments, unbound: false) : stateMachineType;
+            var frameType = method.IsGenericMethod ? stateMachineType.Construct(method.TypeArgumentsWithAnnotations, unbound: false) : stateMachineType;
             LocalSymbol stateMachineVariable = F.SynthesizedLocal(frameType, null);
             InitializeStateMachine(bodyBuilder, frameType, stateMachineVariable);
 
@@ -365,13 +373,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             //    if (this.initialThreadId == {managedThreadId} && this.state == -2)
             //    {
             //        this.state = {initialState};
+            //        extraReset
             //        result = this;
             //    }
             //    else
             //    {
             //        result = new {StateMachineType}({initialState});
             //    }
-            //    result.parameter = this.parameterProxy; // copy all of the parameter proxies
+            //
+            //    result.parameter = this.parameterProxy; // OR more complex initialization for async-iterator parameter marked with [EnumeratorCancellation]
 
             // The implementation doesn't depend on the method body of the iterator method.
             // Only on its parameters and staticness.
@@ -390,18 +400,36 @@ namespace Microsoft.CodeAnalysis.CSharp
             if ((object)initialThreadIdField != null)
             {
                 managedThreadId = MakeCurrentThreadId();
+
+                var thenBuilder = ArrayBuilder<BoundStatement>.GetInstance(4);
+                thenBuilder.Add(
+                    // this.state = {initialState};
+                    F.Assignment(F.Field(F.This(), stateField), F.Literal(initialState)));
+
+                thenBuilder.Add(
+                    // result = this;
+                    F.Assignment(F.Local(resultVariable), F.This()));
+
+                var extraReset = GetExtraResetForIteratorGetEnumerator();
+                if (extraReset != null)
+                {
+                    thenBuilder.Add(extraReset);
+                }
+
+                if (method.IsStatic || method.ThisParameter.Type.IsReferenceType)
+                {
+                    // if this is a reference type, no need to copy it since it is not assignable
+                    thenBuilder.Add(
+                        // goto thisInitialized;
+                        F.Goto(thisInitialized));
+                }
+
                 makeIterator = F.If(
                     // if (this.state == -2 && this.initialThreadId == Thread.CurrentThread.ManagedThreadId)
                     condition: F.LogicalAnd(
-                            F.IntEqual(F.Field(F.This(), stateField), F.Literal(StateMachineStates.FinishedStateMachine)),
+                        F.IntEqual(F.Field(F.This(), stateField), F.Literal(StateMachineStates.FinishedStateMachine)),
                         F.IntEqual(F.Field(F.This(), initialThreadIdField), managedThreadId)),
-                    thenClause: F.Block(
-                            F.Assignment(F.Field(F.This(), stateField), F.Literal(initialState)), // this.state = {initialState};
-                            F.Assignment(F.Local(resultVariable), F.This()), // result = this;
-                            method.IsStatic || method.ThisParameter.Type.IsReferenceType ? // if this is a reference type, no need to copy it since it is not assignable
-                                F.Goto(thisInitialized) : // goto thisInitialized
-                                (BoundStatement)F.StatementList()),
-                    // else result = new {StateMachineType}({initialState})
+                    thenClause: F.Block(thenBuilder.ToImmutableAndFree()),
                     elseClauseOpt: makeIterator);
             }
 
@@ -430,10 +458,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                 CapturedSymbolReplacement proxy;
                 if (copyDest.TryGetValue(parameter, out proxy))
                 {
-                    bodyBuilder.Add(
-                        F.Assignment(
-                            proxy.Replacement(F.Syntax, stateMachineType => F.Local(resultVariable)),
-                            copySrc[parameter].Replacement(F.Syntax, stateMachineType => F.This())));
+                    // result.parameter
+                    BoundExpression resultParameter = proxy.Replacement(F.Syntax, stateMachineType => F.Local(resultVariable));
+                    // this.parameterProxy
+                    BoundExpression parameterProxy = copySrc[parameter].Replacement(F.Syntax, stateMachineType => F.This());
+                    BoundStatement copy = InitializeParameterField(getEnumeratorMethod, parameter, resultParameter, parameterProxy);
+
+                    bodyBuilder.Add(copy);
                 }
             }
 
@@ -441,6 +472,20 @@ namespace Microsoft.CodeAnalysis.CSharp
             F.CloseMethod(F.Block(ImmutableArray.Create(resultVariable), bodyBuilder.ToImmutableAndFree()));
             return getEnumerator;
         }
+
+        protected virtual BoundStatement InitializeParameterField(MethodSymbol getEnumeratorMethod, ParameterSymbol parameter, BoundExpression resultParameter, BoundExpression parameterProxy)
+        {
+            Debug.Assert(!method.IsIterator || !method.IsAsync); // an override handles async-iterators
+
+            // result.parameter = this.parameterProxy;
+            return F.Assignment(resultParameter, parameterProxy);
+        }
+
+        /// <summary>
+        /// Async-iterator methods use a GetAsyncEnumerator method just like the GetEnumerator of iterator methods.
+        /// But they need to do a bit more work (to reset the dispose mode).
+        /// </summary>
+        protected virtual BoundStatement GetExtraResetForIteratorGetEnumerator() => null;
 
         /// <summary>
         /// Returns true if either Thread.ManagedThreadId or Environment.CurrentManagedThreadId are available

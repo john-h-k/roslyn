@@ -79,7 +79,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             {
                                 if (local is SynthesizedLocal synthesized)
                                 {
-                                    appendLine($"{local.Type.ToDisplayString()} {name(synthesized)};");
+                                    appendLine($"{local.TypeWithAnnotations.ToDisplayString()} {name(synthesized)};");
                                 }
                                 else
                                 {
@@ -292,7 +292,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                         }
                     case BoundSwitchLabel label:
                         {
-                            appendSource(label.ExpressionOpt);
+                            appendSource(label.Pattern);
                             break;
                         }
                     case BoundUnaryOperator unary:
@@ -321,6 +321,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             append(" }");
                             break;
                         }
+                    case BoundDefaultLiteral _:
                     case BoundDefaultExpression _:
                         {
                             append("default");

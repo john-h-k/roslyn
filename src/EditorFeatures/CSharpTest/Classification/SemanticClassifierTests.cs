@@ -31,12 +31,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
     {
         protected override Task<ImmutableArray<ClassifiedSpan>> GetClassificationSpansAsync(string code, TextSpan span, ParseOptions options)
         {
-            using (var workspace = TestWorkspace.CreateCSharp(code, options))
-            {
-                var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
+            using var workspace = TestWorkspace.CreateCSharp(code, options);
+            var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
 
-                return GetSemanticClassificationsAsync(document, span);
-            }
+            return GetSemanticClassificationsAsync(document, span);
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
@@ -526,7 +524,7 @@ class C
 class C
 {
 }",
-                Namespace("System"), 
+                Namespace("System"),
                 Class("Obsolete"));
         }
 
@@ -540,7 +538,7 @@ class A
 {
     [Obsolete]
 }",
-                Namespace("System"), 
+                Namespace("System"),
                 Class("Obsolete"));
         }
 
@@ -555,7 +553,7 @@ class A
 class MyAttribute : Attribute
 {
 }",
-                Namespace("System"), 
+                Namespace("System"),
                 Class("My"),
                 Class("Attribute"));
         }
@@ -578,13 +576,11 @@ class Base
 class Derived : Base
 {
 }",
-                Namespace("System"), 
+                Namespace("System"),
                 Class("Base"),
                 Class("My"),
-                Method("My"),
                 Class("Derived"),
                 Class("My"),
-                Method("My"),
                 Class("Attribute"),
                 Class("Base"));
         }
@@ -1118,14 +1114,14 @@ class C
     global::System.String f;
 }",
                 Namespace("System"),
-                Namespace("System"), 
+                Namespace("System"),
                 Class("String"));
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task BindingTypeNames()
         {
-            string code = @"using System;
+            var code = @"using System;
 using Str = System.String;
 class C
 {
@@ -1142,9 +1138,9 @@ class C
             await TestAsync(code,
                 code,
                 Options.Regular,
-                Namespace("System"), 
+                Namespace("System"),
                 Class("Str"),
-                Namespace("System"), 
+                Namespace("System"),
                 Class("String"),
                 Class("Str"),
                 Class("Nested"),
@@ -1156,6 +1152,37 @@ class C
                 Namespace("System"),
                 Class("String"));
         }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task Constructors()
+        {
+            await TestAsync(
+@"struct S
+{
+    public int i;
+
+    public S(int i)
+    {
+        this.i = i;
+    }
+}
+
+class C
+{
+    public C()
+    {
+        var s = new S(1);
+        var c = new C();
+    }
+}",
+                Field("i"),
+                Parameter("i"),
+                Keyword("var"),
+                Struct("S"),
+                Keyword("var"),
+                Class("C"));
+        }
+
 
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TypesOfClassMembers()
@@ -1765,7 +1792,7 @@ class Obsolete : Attribute
 class ObsoleteAttribute : Attribute
 {
 }",
-                Namespace("System"), 
+                Namespace("System"),
                 Class("Serializable"),
                 Class("SerializableAttribute"),
                 Class("Obsolete"),
@@ -2262,6 +2289,34 @@ struct Type<T>
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task NameOfLocalMethod()
+        {
+            await TestAsync(
+@"class C
+{
+    void goo()
+    {
+        var x = nameof(M);
+
+        void M()
+        {
+        }
+
+        void M(int a)
+        {
+        }
+
+        void M(string s)
+        {
+        }
+    }
+}",
+                Keyword("var"),
+                Keyword("nameof"),
+                Method("M"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task MethodCalledNameOfInScope()
         {
             await TestAsync(
@@ -2285,73 +2340,63 @@ struct Type<T>
         public async Task TestCreateWithBufferNotInWorkspace()
         {
             // don't crash
-            using (var workspace = TestWorkspace.CreateCSharp(""))
+            using var workspace = TestWorkspace.CreateCSharp("");
+            var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
+
+            var contentTypeService = document.GetLanguageService<IContentTypeLanguageService>();
+            var contentType = contentTypeService.GetDefaultContentType();
+            var extraBuffer = workspace.ExportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer("", contentType);
+
+            WpfTestRunner.RequireWpfFact($"Creates an {nameof(IWpfTextView)} explicitly with an unrelated buffer");
+            using var disposableView = workspace.ExportProvider.GetExportedValue<ITextEditorFactoryService>().CreateDisposableTextView(extraBuffer);
+            var listenerProvider = workspace.ExportProvider.GetExportedValue<IAsynchronousOperationListenerProvider>();
+
+            var provider = new SemanticClassificationViewTaggerProvider(
+                workspace.ExportProvider.GetExportedValue<IThreadingContext>(),
+                workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
+                workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
+                workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
+                listenerProvider);
+
+            using var tagger = (IDisposable)provider.CreateTagger<IClassificationTag>(disposableView.TextView, extraBuffer);
+            using (var edit = extraBuffer.CreateEdit())
             {
-                var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
-
-                var contentTypeService = document.GetLanguageService<IContentTypeLanguageService>();
-                var contentType = contentTypeService.GetDefaultContentType();
-                var extraBuffer = workspace.ExportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer("", contentType);
-
-                WpfTestRunner.RequireWpfFact($"Creates an {nameof(IWpfTextView)} explicitly with an unrelated buffer");
-                using (var disposableView = workspace.ExportProvider.GetExportedValue<ITextEditorFactoryService>().CreateDisposableTextView(extraBuffer))
-                {
-                    var listenerProvider = workspace.ExportProvider.GetExportedValue<IAsynchronousOperationListenerProvider>();
-
-                    var provider = new SemanticClassificationViewTaggerProvider(
-                        workspace.ExportProvider.GetExportedValue<IThreadingContext>(),
-                        workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
-                        workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
-                        workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
-                        listenerProvider);
-
-                    using (var tagger = (IDisposable)provider.CreateTagger<IClassificationTag>(disposableView.TextView, extraBuffer))
-                    {
-                        using (var edit = extraBuffer.CreateEdit())
-                        {
-                            edit.Insert(0, "class A { }");
-                            edit.Apply();
-                        }
-
-                        var waiter = listenerProvider.GetWaiter(FeatureAttribute.Classification);
-                        await waiter.CreateWaitTask();
-                    }
-                }
+                edit.Insert(0, "class A { }");
+                edit.Apply();
             }
+
+            var waiter = listenerProvider.GetWaiter(FeatureAttribute.Classification);
+            await waiter.CreateExpeditedWaitTask();
         }
 
         [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestGetTagsOnBufferTagger()
         {
             // don't crash
-            using (var workspace = TestWorkspace.CreateCSharp("class C { C c; }"))
-            {
-                var document = workspace.Documents.First();
+            using var workspace = TestWorkspace.CreateCSharp("class C { C c; }");
+            var document = workspace.Documents.First();
 
-                var listenerProvider = workspace.ExportProvider.GetExportedValue<IAsynchronousOperationListenerProvider>();
+            var listenerProvider = workspace.ExportProvider.GetExportedValue<IAsynchronousOperationListenerProvider>();
 
-                var provider = new SemanticClassificationBufferTaggerProvider(
-                    workspace.ExportProvider.GetExportedValue<IThreadingContext>(),
-                    workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
-                    workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
-                    workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
-                    listenerProvider);
+            var provider = new SemanticClassificationBufferTaggerProvider(
+                workspace.ExportProvider.GetExportedValue<IThreadingContext>(),
+                workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
+                workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
+                workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
+                listenerProvider);
 
-                var tagger = provider.CreateTagger<IClassificationTag>(document.TextBuffer);
-                using (var disposable = (IDisposable)tagger)
-                {
-                    var waiter = listenerProvider.GetWaiter(FeatureAttribute.Classification);
-                    await waiter.CreateWaitTask();
+            var tagger = provider.CreateTagger<IClassificationTag>(document.TextBuffer);
+            using var disposable = (IDisposable)tagger;
+            var waiter = listenerProvider.GetWaiter(FeatureAttribute.Classification);
+            await waiter.CreateExpeditedWaitTask();
 
-                    var tags = tagger.GetTags(document.TextBuffer.CurrentSnapshot.GetSnapshotSpanCollection());
-                    var allTags = tagger.GetAllTags(document.TextBuffer.CurrentSnapshot.GetSnapshotSpanCollection(), CancellationToken.None);
+            var tags = tagger.GetTags(document.TextBuffer.CurrentSnapshot.GetSnapshotSpanCollection());
+            var allTags = tagger.GetAllTags(document.TextBuffer.CurrentSnapshot.GetSnapshotSpanCollection(), CancellationToken.None);
 
-                    Assert.Empty(tags);
-                    Assert.NotEmpty(allTags);
+            Assert.Empty(tags);
+            Assert.NotEmpty(allTags);
 
-                    Assert.Equal(allTags.Count(), 1);
-                }
-            }
+            Assert.Equal(allTags.Count(), 1);
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
@@ -2408,7 +2453,7 @@ class MyClass
     public MyClass(int x)
     {
     }
-}", Method("MyClass"));
+}", Class("MyClass"));
         }
 
         [WorkItem(633, "https://github.com/dotnet/roslyn/issues/633")]
@@ -2426,7 +2471,7 @@ class MyClass
     }
 }",
     Class("MyClass"),
-    Method("MyClass"));
+    Class("MyClass"));
         }
 
         [WorkItem(13174, "https://github.com/dotnet/roslyn/issues/13174")]
@@ -2462,7 +2507,7 @@ namespace ConsoleApplication1
         }
 
         [WorkItem(18956, "https://github.com/dotnet/roslyn/issues/18956")]
-        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        [WpfFact(Skip = "https://github.com/dotnet/roslyn/issues/30855"), Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestVarInPattern1()
         {
             await TestAsync(
@@ -2479,7 +2524,7 @@ class Program
         }
 
         [WorkItem(18956, "https://github.com/dotnet/roslyn/issues/18956")]
-        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        [WpfFact(Skip = "https://github.com/dotnet/roslyn/issues/30855"), Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestVarInPattern2()
         {
             await TestAsync(
@@ -3382,6 +3427,190 @@ class True
                 Class("True"),
                 Class("True"),
                 Class("True"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestCatchDeclarationVariable()
+        {
+            await TestInMethodAsync(@"
+try
+{
+}
+catch (Exception ex)
+{
+    throw ex;
+}",
+                Local("ex"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_InsideMethod()
+        {
+            // Asserts no Keyword("notnull") because it is an identifier.
+            await TestInMethodAsync(@"
+var notnull = 0;
+notnull++;",
+                Keyword("var"),
+                Local("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Type_Keyword()
+        {
+            await TestAsync(
+                "class X<T> where T : notnull { }",
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Type_ExistingInterface()
+        {
+            await TestAsync(@"
+interface notnull {}
+class X<T> where T : notnull { }",
+                TypeParameter("T"),
+                Interface("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Type_ExistingInterfaceButOutOfScope()
+        {
+            await TestAsync(@"
+namespace OtherScope
+{
+    interface notnull {}
+}
+class X<T> where T : notnull { }",
+                Namespace("OtherScope"),
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Method_Keyword()
+        {
+            await TestAsync(@"
+class X
+{
+    void M<T>() where T : notnull { }
+}",
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Method_ExistingInterface()
+        {
+            await TestAsync(@"
+interface notnull {}
+class X
+{
+    void M<T>() where T : notnull { }
+}",
+                TypeParameter("T"),
+                Interface("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Method_ExistingInterfaceButOutOfScope()
+        {
+            await TestAsync(@"
+namespace OtherScope
+{
+    interface notnull {}
+}
+class X
+{
+    void M<T>() where T : notnull { }
+}",
+                Namespace("OtherScope"),
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Delegate_Keyword()
+        {
+            await TestAsync(
+                "delegate void D<T>() where T : notnull;",
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Delegate_ExistingInterface()
+        {
+            await TestAsync(@"
+interface notnull {}
+delegate void D<T>() where T : notnull;",
+                TypeParameter("T"),
+                Interface("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_Delegate_ExistingInterfaceButOutOfScope()
+        {
+            await TestAsync(@"
+namespace OtherScope
+{
+    interface notnull {}
+}
+delegate void D<T>() where T : notnull;",
+                Namespace("OtherScope"),
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_LocalFunction_Keyword()
+        {
+            await TestAsync(@"
+class X
+{
+    void N()
+    {
+        void M<T>() where T : notnull { }
+    }
+}",
+                TypeParameter("T"),
+                Keyword("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_LocalFunction_ExistingInterface()
+        {
+            await TestAsync(@"
+interface notnull {}
+class X
+{
+    void N()
+    {
+        void M<T>() where T : notnull { }
+    }
+}",
+                TypeParameter("T"),
+                Interface("notnull"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task TestNotNullConstraint_LocalFunction_ExistingInterfaceButOutOfScope()
+        {
+            await TestAsync(@"
+namespace OtherScope
+{
+    interface notnull {}
+}
+class X
+{
+    void N()
+    {
+        void M<T>() where T : notnull { }
+    }
+}",
+                Namespace("OtherScope"),
+                TypeParameter("T"),
+                Keyword("notnull"));
         }
     }
 }

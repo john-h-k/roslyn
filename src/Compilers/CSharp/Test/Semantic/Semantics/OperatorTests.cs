@@ -3127,7 +3127,7 @@ class C
                 select edge.Key.Text + ": " + (node.Value != null ? node.Value.ToString() : "<null>"));
         }
 
-        private static string FormatTypeArgumentList(ImmutableArray<TypeSymbolWithAnnotations>? arguments)
+        private static string FormatTypeArgumentList(ImmutableArray<TypeWithAnnotations>? arguments)
         {
             if (arguments == null || arguments.Value.IsEmpty)
             {
@@ -3141,7 +3141,7 @@ class C
                 {
                     s += ", ";
                 }
-                s += arguments.Value[i].TypeSymbol.ToString();
+                s += arguments.Value[i].Type.ToString();
             }
 
             return s + ">";
@@ -3154,7 +3154,7 @@ class C
                 let node = edge.Value
                 where node.Text == "dynamicMemberAccess"
                 let name = node["name"]
-                let typeArguments = node["typeArgumentsOpt"].Value as ImmutableArray<TypeSymbolWithAnnotations>?
+                let typeArguments = node["typeArgumentsOpt"].Value as ImmutableArray<TypeWithAnnotations>?
                 select name.Value.ToString() + FormatTypeArgumentList(typeArguments));
         }
 
@@ -5183,7 +5183,7 @@ class Program
 
         [WorkItem(543294, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543294")]
         [Fact()]
-        public void TestIsOperatorWithTypeParameter()
+        public void TestIsOperatorWithTypeParameter_01()
         {
             var source = @"
 using System;
@@ -5213,6 +5213,64 @@ class Program
                 // (13,18): warning CS0184: The given expression is never of the provided ('T') type
                 //         bool b = Main() is T;
                 Diagnostic(ErrorCode.WRN_IsAlwaysFalse, "Main() is T").WithArguments("T"));
+        }
+
+        [Fact]
+        [WorkItem(34679, "https://github.com/dotnet/roslyn/issues/34679")]
+        public void TestIsOperatorWithTypeParameter_02()
+        {
+            var source = @"
+class A<T>
+{
+    public virtual void M1<S>(S x) where S : T { }
+}
+
+class C : A<int?>
+{
+
+    static void Main()
+    {
+        var x = new C();
+        int? y = null;
+        x.M1(y);
+        x.Test(y);
+        y = 0;
+        x.M1(y);
+        x.Test(y);
+    }
+
+    void Test(int? x)
+    {
+        if (x is System.ValueType)
+        {
+            System.Console.WriteLine(""Test if"");
+        }
+        else
+        {
+            System.Console.WriteLine(""Test else"");
+        }
+    }
+
+    public override void M1<S>(S x)
+    {
+        if (x is System.ValueType)
+        {
+            System.Console.WriteLine(""M1 if"");
+        }
+        else
+        {
+            System.Console.WriteLine(""M1 else"");
+        }
+    }
+}
+";
+            var comp = CreateCompilation(source, options: TestOptions.ReleaseExe);
+            comp.VerifyDiagnostics();
+            CompileAndVerify(comp, expectedOutput:
+@"M1 else
+Test else
+M1 if
+Test if");
         }
 
         [WorkItem(844635, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/844635")]
@@ -5283,6 +5341,26 @@ class Outer<T>
                 // (32,13): warning CS0184: The given expression is never of the provided ('Outer<long>.E') type
                 //         b = e2 is Outer<long>.E;    // Always false.
                 Diagnostic(ErrorCode.WRN_IsAlwaysFalse, "e2 is Outer<long>.E").WithArguments("Outer<long>.E").WithLocation(32, 13));
+        }
+
+        [Fact]
+        public void TestIsOperatorWithGenericClassAndValueType()
+        {
+            var source = @"
+class Program
+{
+    static bool Goo<T>(C<T> c)
+    {
+        return c is int;   // always false
+    }
+}
+class C<T> { }
+";
+            CreateCompilation(source).VerifyDiagnostics(
+                // (6,16): warning CS0184: The given expression is never of the provided ('int') type
+                //         return c is int;   // always false
+                Diagnostic(ErrorCode.WRN_IsAlwaysFalse, "c is int").WithArguments("int").WithLocation(6, 16)
+                );
         }
 
         [WorkItem(844635, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/844635")]
@@ -6526,7 +6604,7 @@ class Program
             comp.VerifyDiagnostics();
 
             var expectedOperator = comp.GlobalNamespace.GetMember<NamedTypeSymbol>("S1").GetMembers(WellKnownMemberNames.EqualityOperatorName).
-                OfType<MethodSymbol>().Single(m => m.ParameterTypes[0].Equals(m.ParameterTypes[1], TypeCompareKind.ConsiderEverything));
+                OfType<MethodSymbol>().Single(m => m.ParameterTypesWithAnnotations[0].Equals(m.ParameterTypesWithAnnotations[1], TypeCompareKind.ConsiderEverything));
 
             var tree = comp.SyntaxTrees.Single();
             var model = comp.GetSemanticModel(tree);
@@ -7133,7 +7211,7 @@ public class RubyTime
             Assert.False(symbol1.CanBeReferencedByName);
             Assert.Null(symbol1.DeclaringCompilation);
             Assert.Equal(symbol1.Name, symbol1.MetadataName);
-            Assert.Same(symbol1.ContainingSymbol, symbol1.Parameters[0].Type.TypeSymbol);
+            Assert.Same(symbol1.ContainingSymbol, symbol1.Parameters[0].Type);
             Assert.Equal(0, symbol1.Locations.Length);
             Assert.Null(symbol1.GetDocumentationCommentId());
             Assert.Equal("", symbol1.GetDocumentationCommentXml());
@@ -7683,20 +7761,20 @@ class Module1
                 {
                     if (leftType.IsPointerType())
                     {
-                        signature = new BinaryOperatorSignature(op | BinaryOperatorKind.Pointer, leftType, symbol1.Parameters[1].Type.TypeSymbol, leftType);
-                        Assert.True(symbol1.Parameters[1].Type.TypeSymbol.IsIntegralType());
+                        signature = new BinaryOperatorSignature(op | BinaryOperatorKind.Pointer, leftType, symbol1.Parameters[1].Type, leftType);
+                        Assert.True(symbol1.Parameters[1].Type.IsIntegralType());
                     }
                     else
                     {
-                        signature = new BinaryOperatorSignature(op | BinaryOperatorKind.Pointer, symbol1.Parameters[0].Type.TypeSymbol, rightType, rightType);
-                        Assert.True(symbol1.Parameters[0].Type.TypeSymbol.IsIntegralType());
+                        signature = new BinaryOperatorSignature(op | BinaryOperatorKind.Pointer, symbol1.Parameters[0].Type, rightType, rightType);
+                        Assert.True(symbol1.Parameters[0].Type.IsIntegralType());
                     }
                 }
                 else if (op == BinaryOperatorKind.Subtraction &&
                     (leftType.IsPointerType() && (rightType.IsIntegralType() || rightType.IsCharType())))
                 {
-                    signature = new BinaryOperatorSignature(op | BinaryOperatorKind.String, leftType, symbol1.Parameters[1].Type.TypeSymbol, leftType);
-                    Assert.True(symbol1.Parameters[1].Type.TypeSymbol.IsIntegralType());
+                    signature = new BinaryOperatorSignature(op | BinaryOperatorKind.String, leftType, symbol1.Parameters[1].Type, leftType);
+                    Assert.True(symbol1.Parameters[1].Type.IsIntegralType());
                 }
                 else if (op == BinaryOperatorKind.Subtraction && leftType.IsPointerType() && TypeSymbol.Equals(leftType, rightType, TypeCompareKind.ConsiderEverything2))
                 {
@@ -7902,21 +7980,21 @@ class Module1
             Assert.Null(symbol1.DeclaringCompilation);
             Assert.Equal(symbol1.Name, symbol1.MetadataName);
 
-            Assert.True(TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[0].Type.TypeSymbol, TypeCompareKind.ConsiderEverything2) ||
-                TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[1].Type.TypeSymbol, TypeCompareKind.ConsiderEverything2));
+            Assert.True(TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[0].Type, TypeCompareKind.ConsiderEverything2) ||
+                TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[1].Type, TypeCompareKind.ConsiderEverything2));
 
             int match = 0;
-            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.ReturnType.TypeSymbol, TypeCompareKind.ConsiderEverything2))
+            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.ReturnType, TypeCompareKind.ConsiderEverything2))
             {
                 match++;
             }
 
-            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[0].Type.TypeSymbol, TypeCompareKind.ConsiderEverything2))
+            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[0].Type, TypeCompareKind.ConsiderEverything2))
             {
                 match++;
             }
 
-            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[1].Type.TypeSymbol, TypeCompareKind.ConsiderEverything2))
+            if (TypeSymbol.Equals((TypeSymbol)symbol1.ContainingSymbol, symbol1.Parameters[1].Type, TypeCompareKind.ConsiderEverything2))
             {
                 match++;
             }
@@ -10764,6 +10842,69 @@ public class C {
             var type = (TypeSymbol)compilation.GetSemanticModel(tree).GetTypeInfo(negNode).Type;
             Assert.Equal("?", type.ToTestDisplayString());
             Assert.True(type.IsErrorType());
+        }
+
+        [Fact, WorkItem(529600, "DevDiv"), WorkItem(7398, "https://github.com/dotnet/roslyn/issues/7398")]
+        public void Bug529600()
+        {
+            // History of this bug:  When constant folding a long sequence of string concatentations, there is
+            // an intermediate constant value for every left-hand operand.  So the total memory consumed to
+            // compute the whole concatenation was O(n^2).  The compiler would simply perform this work and
+            // eventually run out of memory, simply crashing with no useful diagnostic.  Later, the concatenation
+            // implementation was instrumented so it would detect when it was likely to run out of memory soon,
+            // and would instead report a diagnostic at the last step.  This test was added to demonstrate that
+            // we produced a diagnostic.  However, the compiler still consumed O(n^2) memory for the
+            // concatenation and this test used to consume so much memory that it would cause other tests running
+            // in parallel to fail because they might not have enough memory to succeed.  So the test was
+            // disabled and eventually removed.  The compiler would still crash with programs constaining large
+            // string concatenations, so the underlying problem had not been addressed.  Now we have revised the
+            // implementation of constant folding so that it requires O(n) memory. As a consequence this test now
+            // runs very quickly and does not consume gobs of memory.
+            string source = $@"
+class M
+{{
+    static void Main()
+    {{}}
+    const string C0 = ""{new string('0', 65000)}"";
+    const string C1 = C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 + C0 +
+                      C0;
+     const string C2 = C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                      C1;
+}}
+";
+            CreateCompilation(source).VerifyDiagnostics(
+                // (28,68): error CS8095: Length of String constant resulting from concatenation exceeds System.Int32.MaxValue.  Try splitting the string into multiple constants.
+                //                       C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 + C1 +
+                Diagnostic(ErrorCode.ERR_ConstantStringTooLong, "C1").WithLocation(28, 68)
+                );
         }
     }
 }

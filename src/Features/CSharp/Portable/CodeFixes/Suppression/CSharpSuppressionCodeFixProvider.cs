@@ -5,19 +5,24 @@ using System.Composition;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeFixes.Suppression;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Simplification;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
 {
-    [ExportSuppressionFixProvider(PredefinedCodeFixProviderNames.Suppression, LanguageNames.CSharp), Shared]
+    [ExportConfigurationFixProvider(PredefinedCodeFixProviderNames.Suppression, LanguageNames.CSharp), Shared]
     internal class CSharpSuppressionCodeFixProvider : AbstractSuppressionCodeFixProvider
     {
+        [ImportingConstructor]
+        public CSharpSuppressionCodeFixProvider()
+        {
+        }
+
         protected override SyntaxTriviaList CreatePragmaRestoreDirectiveTrivia(Diagnostic diagnostic, Func<SyntaxNode, SyntaxNode> formatNode, bool needsLeadingEndOfLine, bool needsTrailingEndOfLine)
         {
             var restoreKeyword = SyntaxFactory.Token(SyntaxKind.RestoreKeyword);
@@ -68,8 +73,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
 
         protected override bool IsAttributeListWithAssemblyAttributes(SyntaxNode node)
         {
-            var attributeList = node as AttributeListSyntax;
-            return attributeList != null &&
+            return node is AttributeListSyntax attributeList &&
                 attributeList.Target != null &&
                 attributeList.Target.Identifier.Kind() == SyntaxKind.AssemblyKeyword;
         }
@@ -87,23 +91,57 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
             var leadingTriviaForAttributeList = isFirst && !compilationRoot.HasLeadingTrivia ?
                 SyntaxFactory.TriviaList(SyntaxFactory.Comment(GlobalSuppressionsFileHeaderComment)) :
                 default;
-            var attributeList = CreateAttributeList(targetSymbol, diagnostic, leadingTrivia: leadingTriviaForAttributeList, needsLeadingEndOfLine: !isFirst);
+            var attributeList = CreateAttributeList(targetSymbol, diagnostic, isAssemblyAttribute: true, leadingTrivia: leadingTriviaForAttributeList, needsLeadingEndOfLine: !isFirst);
             attributeList = (AttributeListSyntax)Formatter.Format(attributeList, workspace, cancellationToken: cancellationToken);
             return compilationRoot.AddAttributeLists(attributeList);
+        }
+
+        protected override SyntaxNode AddLocalSuppressMessageAttribute(SyntaxNode targetNode, ISymbol targetSymbol, Diagnostic diagnostic)
+        {
+            var memberNode = (MemberDeclarationSyntax)targetNode;
+
+            SyntaxTriviaList leadingTriviaForAttributeList;
+            bool needsLeadingEndOfLine;
+            if (!memberNode.GetAttributes().Any())
+            {
+                leadingTriviaForAttributeList = memberNode.GetLeadingTrivia();
+                memberNode = memberNode.WithoutLeadingTrivia();
+                needsLeadingEndOfLine = !leadingTriviaForAttributeList.Any() || !IsEndOfLine(leadingTriviaForAttributeList.Last());
+            }
+            else
+            {
+                leadingTriviaForAttributeList = default;
+                needsLeadingEndOfLine = true;
+            }
+
+            var attributeList = CreateAttributeList(targetSymbol, diagnostic, isAssemblyAttribute: false, leadingTrivia: leadingTriviaForAttributeList, needsLeadingEndOfLine: needsLeadingEndOfLine);
+            return memberNode.AddAttributeLists(attributeList);
         }
 
         private AttributeListSyntax CreateAttributeList(
             ISymbol targetSymbol,
             Diagnostic diagnostic,
+            bool isAssemblyAttribute,
             SyntaxTriviaList leadingTrivia,
             bool needsLeadingEndOfLine)
         {
-            var attributeArguments = CreateAttributeArguments(targetSymbol, diagnostic);
-            var attribute = SyntaxFactory.Attribute(SyntaxFactory.ParseName(SuppressMessageAttributeName), attributeArguments);
-            var attributes = new SeparatedSyntaxList<AttributeSyntax>().Add(attribute);
+            var attributeName = SyntaxFactory.ParseName(SuppressMessageAttributeName).WithAdditionalAnnotations(Simplifier.Annotation);
+            var attributeArguments = CreateAttributeArguments(targetSymbol, diagnostic, isAssemblyAttribute);
 
-            var targetSpecifier = SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword));
-            var attributeList = SyntaxFactory.AttributeList(targetSpecifier, attributes);
+            var attributes = new SeparatedSyntaxList<AttributeSyntax>()
+                .Add(SyntaxFactory.Attribute(attributeName, attributeArguments));
+
+            AttributeListSyntax attributeList;
+            if (isAssemblyAttribute)
+            {
+                var targetSpecifier = SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword));
+                attributeList = SyntaxFactory.AttributeList(targetSpecifier, attributes);
+            }
+            else
+            {
+                attributeList = SyntaxFactory.AttributeList(attributes);
+            }
+
             var endOfLineTrivia = SyntaxFactory.ElasticCarriageReturnLineFeed;
             var triviaList = SyntaxFactory.TriviaList();
 
@@ -115,7 +153,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
             return attributeList.WithLeadingTrivia(leadingTrivia.AddRange(triviaList));
         }
 
-        private AttributeArgumentListSyntax CreateAttributeArguments(ISymbol targetSymbol, Diagnostic diagnostic)
+        private AttributeArgumentListSyntax CreateAttributeArguments(ISymbol targetSymbol, Diagnostic diagnostic, bool isAssemblyAttribute)
         {
             // SuppressMessage("Rule Category", "Rule Id", Justification = nameof(Justification), Scope = nameof(Scope), Target = nameof(Target))
             var category = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(diagnostic.Descriptor.Category));
@@ -131,17 +169,20 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
 
             var attributeArgumentList = SyntaxFactory.AttributeArgumentList().AddArguments(categoryArgument, ruleIdArgument, justificationArgument);
 
-            var scopeString = GetScopeString(targetSymbol.Kind);
-            if (scopeString != null)
+            if (isAssemblyAttribute)
             {
-                var scopeExpr = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(scopeString));
-                var scopeArgument = SyntaxFactory.AttributeArgument(SyntaxFactory.NameEquals("Scope"), nameColon: null, expression: scopeExpr);
+                var scopeString = GetScopeString(targetSymbol.Kind);
+                if (scopeString != null)
+                {
+                    var scopeExpr = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(scopeString));
+                    var scopeArgument = SyntaxFactory.AttributeArgument(SyntaxFactory.NameEquals("Scope"), nameColon: null, expression: scopeExpr);
 
-                var targetString = GetTargetString(targetSymbol);
-                var targetExpr = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(targetString));
-                var targetArgument = SyntaxFactory.AttributeArgument(SyntaxFactory.NameEquals("Target"), nameColon: null, expression: targetExpr);
+                    var targetString = GetTargetString(targetSymbol);
+                    var targetExpr = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(targetString));
+                    var targetArgument = SyntaxFactory.AttributeArgument(SyntaxFactory.NameEquals("Target"), nameColon: null, expression: targetExpr);
 
-                attributeArgumentList = attributeArgumentList.AddArguments(scopeArgument, targetArgument);
+                    attributeArgumentList = attributeArgumentList.AddArguments(scopeArgument, targetArgument);
+                }
             }
 
             return attributeArgumentList;
@@ -151,8 +192,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeFixes.Suppression
         {
             if (attribute is AttributeSyntax attributeSyntax)
             {
-                var attributeList = attributeSyntax.Parent as AttributeListSyntax;
-                return attributeList != null && attributeList.Attributes.Count == 1;
+                return attributeSyntax.Parent is AttributeListSyntax attributeList && attributeList.Attributes.Count == 1;
             }
 
             return false;

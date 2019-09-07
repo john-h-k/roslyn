@@ -2413,6 +2413,41 @@ class TestClass
                 Diagnostic(ErrorCode.ERR_BadIteratorReturnRef, "TestFunction").WithArguments("TestClass.TestFunction()").WithLocation(5, 13));
         }
 
+        [Fact]
+        public void CannotUseYieldReturnInAReturnByRefFunction_InIfBlock()
+        {
+            var code = @"
+class TestClass
+{
+    int x = 0;
+    ref int TestFunction()
+    {
+        if (true)
+        {
+            yield return x;
+        }
+
+        ref int localFunction()
+        {
+            if (true)
+            {
+                yield return x;
+            }
+        }
+
+        yield return localFunction();
+    }
+}";
+
+            CreateCompilation(code).VerifyDiagnostics(
+                // (12,17): error CS8154: The body of 'localFunction()' cannot be an iterator block because 'localFunction()' returns by reference
+                //         ref int localFunction()
+                Diagnostic(ErrorCode.ERR_BadIteratorReturnRef, "localFunction").WithArguments("localFunction()").WithLocation(12, 17),
+                // (5,13): error CS8154: The body of 'TestClass.TestFunction()' cannot be an iterator block because 'TestClass.TestFunction()' returns by reference
+                //     ref int TestFunction()
+                Diagnostic(ErrorCode.ERR_BadIteratorReturnRef, "TestFunction").WithArguments("TestClass.TestFunction()").WithLocation(5, 13));
+        }
+
         [Fact, WorkItem(13073, "https://github.com/dotnet/roslyn/issues/13073")]
         public void CannotUseRefReturnInExpressionTree_ParenthesizedLambdaExpression()
         {
@@ -2673,9 +2708,9 @@ class TestClass
     }
 }";
             CreateCompilationWithMscorlib45(code).VerifyEmitDiagnostics(
-                // (26,51): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.Save(int)' because it returns by reference
+                // (26,19): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.Save(int)' because it returns by reference
                 //         Write(ref Save(await Task.FromResult(0)), await Task.FromResult(1));
-                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "await Task.FromResult(1)").WithArguments("TestClass.Save(int)").WithLocation(26, 51)
+                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "Save(await Task.FromResult(0))").WithArguments("TestClass.Save(int)").WithLocation(26, 19)
             );
         }
 
@@ -3407,10 +3442,7 @@ class Program
             CreateCompilationWithMscorlib46(text).VerifyDiagnostics(
                 // (6,9): error CS8150: By-value returns may only be used in methods that return by value
                 //         return;
-                Diagnostic(ErrorCode.ERR_MustHaveRefReturn, "return").WithLocation(6, 9),
-                // (6,9): error CS0126: An object of a type convertible to 'int' is required
-                //         return;
-                Diagnostic(ErrorCode.ERR_RetObjectRequired, "return").WithArguments("int").WithLocation(6, 9)
+                Diagnostic(ErrorCode.ERR_MustHaveRefReturn, "return").WithLocation(6, 9)
             );
         }
 
@@ -3569,12 +3601,13 @@ class C
 ";
 
             CreateCompilationWithMscorlib45(text).VerifyEmitDiagnostics(
-                // (32,33): error CS8933: 'await' cannot be used in an expression containing a call to 'S.Instance.get' because it returns by reference
+                // (32,17): error CS8178: 'await' cannot be used in an expression containing a call to 'S.Instance.get' because it returns by reference
                 //         var a = S.Instance.Echo(await Do(i - 1));
-                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "await Do(i - 1)").WithArguments("S.Instance.get").WithLocation(32, 33),
-                // (33,49): error CS8933: 'await' cannot be used in an expression containing a call to 'C.Assign(ref int, int)' because it returns by reference
+                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "S.Instance").WithArguments("S.Instance.get").WithLocation(32, 17),
+                // (33,28): error CS8178: 'await' cannot be used in an expression containing a call to 'C.Assign(ref int, int)' because it returns by reference
                 //         var b = Assign(ref Assign(ref temp, 0), await Do(i - 1));
-                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "await Do(i - 1)").WithArguments("C.Assign(ref int, int)").WithLocation(33, 49));
+                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "Assign(ref temp, 0)").WithArguments("C.Assign(ref int, int)").WithLocation(33, 28)
+                );
         }
 
         [Fact]
@@ -3619,12 +3652,12 @@ class TestClass
     }
 }";
             CreateCompilationWithMscorlib45(code).VerifyEmitDiagnostics(
-                    // (28,19): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.Save(int)' because it returns by reference
-                    //         Save(1) = await Task.FromResult(0);
-                    Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "await Task.FromResult(0)").WithArguments("TestClass.Save(int)").WithLocation(28, 19),
-                    // (36,22): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.this[int, int].get' because it returns by reference
-                    //         inst[1, 2] = await Task.FromResult(1);
-                    Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "await Task.FromResult(1)").WithArguments("TestClass.this[int, int].get").WithLocation(36, 22)
+                // (28,9): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.Save(int)' because it returns by reference
+                //         Save(1) = await Task.FromResult(0);
+                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "Save(1)").WithArguments("TestClass.Save(int)").WithLocation(28, 9),
+                // (36,9): error CS8178: 'await' cannot be used in an expression containing a call to 'TestClass.this[int, int].get' because it returns by reference
+                //         inst[1, 2] = await Task.FromResult(1);
+                Diagnostic(ErrorCode.ERR_RefReturningCallAndAwait, "inst[1, 2]").WithArguments("TestClass.this[int, int].get").WithLocation(36, 9)
             );
         }
 

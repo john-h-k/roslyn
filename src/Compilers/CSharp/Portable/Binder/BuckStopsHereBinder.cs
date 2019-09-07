@@ -143,7 +143,7 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         // This should only be called in the context of syntactically incorrect programs.  In other
         // contexts statements are surrounded by some enclosing method or lambda.
-        internal override TypeSymbol GetIteratorElementType(YieldStatementSyntax node, DiagnosticBag diagnostics)
+        internal override TypeWithAnnotations GetIteratorElementType(YieldStatementSyntax node, DiagnosticBag diagnostics)
         {
             // There's supposed to be an enclosing method or lambda.
             throw ExceptionUtilities.Unreachable;
@@ -157,9 +157,21 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        internal override bool IsNullableGloballyEnabled()
+        internal override bool AreNullableAnnotationsGloballyEnabled()
         {
-            return Compilation.Options.NullableContextOptions != NullableContextOptions.Disable;
+            switch (Compilation.Options.NullableContextOptions)
+            {
+                case NullableContextOptions.Enable:
+                case NullableContextOptions.Annotations:
+                    return true;
+
+                case NullableContextOptions.Disable:
+                case NullableContextOptions.Warnings:
+                    return false;
+
+                default:
+                    throw ExceptionUtilities.UnexpectedValue(Compilation.Options.NullableContextOptions);
+            }
         }
 
         internal override Binder GetBinder(SyntaxNode node)
@@ -177,15 +189,27 @@ namespace Microsoft.CodeAnalysis.CSharp
             throw ExceptionUtilities.Unreachable;
         }
 
-        internal override BoundStatement BindSwitchExpressionAndSections(SwitchStatementSyntax node, Binder originalBinder, DiagnosticBag diagnostics)
+        internal override BoundStatement BindSwitchStatementCore(SwitchStatementSyntax node, Binder originalBinder, DiagnosticBag diagnostics)
         {
             // There's supposed to be a SwitchBinder (or other overrider of this method) in the chain.
+            throw ExceptionUtilities.Unreachable;
+        }
+
+        internal override BoundExpression BindSwitchExpressionCore(SwitchExpressionSyntax node, Binder originalBinder, DiagnosticBag diagnostics)
+        {
+            // There's supposed to be a SwitchExpressionBinder (or other overrider of this method) in the chain.
             throw ExceptionUtilities.Unreachable;
         }
 
         internal override void BindPatternSwitchLabelForInference(CasePatternSwitchLabelSyntax node, DiagnosticBag diagnostics)
         {
             // There's supposed to be a SwitchBinder (or other overrider of this method) in the chain.
+            throw ExceptionUtilities.Unreachable;
+        }
+
+        internal override BoundSwitchExpressionArm BindSwitchExpressionArm(SwitchExpressionArmSyntax node, DiagnosticBag diagnostics)
+        {
+            // There's supposed to be an overrider of this method (e.g. SwitchExpressionArmBinder) for the arm in the chain.
             throw ExceptionUtilities.Unreachable;
         }
 

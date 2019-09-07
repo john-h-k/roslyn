@@ -44,6 +44,18 @@ namespace Microsoft.CodeAnalysis
             return true;
         }
 
+        public static bool All<T, A>(this ArrayBuilder<T> builder, Func<T, A, bool> predicate, A arg)
+        {
+            foreach (var item in builder)
+            {
+                if (!predicate(item, arg))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /// <summary>
         /// Maps an array builder to immutable array.
         /// </summary>
@@ -172,6 +184,15 @@ namespace Microsoft.CodeAnalysis
             {
                 builder.Add(value);
             }
+        }
+
+        public static void FreeAll<T>(this ArrayBuilder<T> builder, Func<T, ArrayBuilder<T>> getNested)
+        {
+            foreach (var item in builder)
+            {
+                getNested(item)?.FreeAll(getNested);
+            }
+            builder.Free();
         }
     }
 }

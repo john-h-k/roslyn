@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.VisualStudio.Shell.FindAllReferences;
 using Microsoft.VisualStudio.Shell.TableControl;
 using Microsoft.VisualStudio.Text.Classification;
+using EnvDTE;
 
 namespace Microsoft.VisualStudio.LanguageServices.FindUsages
 {
@@ -50,8 +51,14 @@ namespace Microsoft.VisualStudio.LanguageServices.FindUsages
             ClassificationTypeMap typeMap,
             IEditorFormatMapService formatMapService,
             IClassificationFormatMapService classificationFormatMapService,
-            [ImportMany]IEnumerable<ITableColumnDefinition> columns)
-            : this(workspace, threadingContext, serviceProvider, typeMap, formatMapService, classificationFormatMapService, columns)
+            [ImportMany]IEnumerable<Lazy<ITableColumnDefinition, NameMetadata>> columns)
+            : this(workspace,
+                   threadingContext,
+                   serviceProvider,
+                   typeMap,
+                   formatMapService,
+                   classificationFormatMapService,
+                   columns.Where(c => c.Metadata.Name == FindUsagesValueUsageInfoColumnDefinition.ColumnName).Select(c => c.Value))
         {
         }
 
@@ -120,7 +127,7 @@ namespace Microsoft.VisualStudio.LanguageServices.FindUsages
             var window = _vsFindAllReferencesService.StartSearch(title);
 
             // Keep track of the users preference for grouping by definition if we don't already know it.
-            // We need this because we disable the Definition column when wer're not showing references
+            // We need this because we disable the Definition column when we're not showing references
             // (i.e. GoToImplementation/GoToDef).  However, we want to restore the user's choice if they
             // then do another FindAllReferences.
             var desiredGroupingPriority = _workspace.Options.GetOption(FindUsagesOptions.DefinitionGroupingPriority);

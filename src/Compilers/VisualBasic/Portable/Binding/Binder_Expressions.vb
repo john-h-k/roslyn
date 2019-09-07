@@ -1367,7 +1367,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim getMethod = propertyAccess.PropertySymbol.GetMostDerivedGetMethod()
                 Debug.Assert(getMethod IsNot Nothing)
 
-                ReportDiagnosticsIfObsolete(diagnostics, getMethod, expr.Syntax)
+                ReportDiagnosticsIfObsoleteOrNotSupportedByRuntime(diagnostics, getMethod, expr.Syntax)
 
                 Select Case propertyAccess.AccessKind
                     Case PropertyAccessKind.Get
@@ -2723,7 +2723,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         If CaseInsensitiveComparison.Equals(leftType.Name, leftName) AndAlso leftType.TypeKind <> TypeKind.TypeParameter Then
                             Dim typeDiagnostics = New DiagnosticBag()
                             Dim boundType = Me.BindNamespaceOrTypeExpression(node, typeDiagnostics)
-                            If boundType.Type = leftType Then
+                            If TypeSymbol.Equals(boundType.Type, leftType, TypeCompareKind.ConsiderEverything) Then
                                 Dim err As ERRID = Nothing
                                 If isInstanceMember AndAlso (Not CanAccessMe(implicitReference:=True, errorId:=err) OrElse Not BindSimpleNameIsMemberOfType(leftSymbol, ContainingType)) Then
                                     diagnostics.AddRange(typeDiagnostics)
@@ -3159,7 +3159,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         hasError = CheckSharedSymbolAccess(node, eventSymbol.IsShared, receiver, qualKind, diagnostics)
                     End If
 
-                    ReportDiagnosticsIfObsolete(diagnostics, eventSymbol, node)
+                    ReportDiagnosticsIfObsoleteOrNotSupportedByRuntime(diagnostics, eventSymbol, node)
 
                     If receiver IsNot Nothing AndAlso receiver.IsPropertyOrXmlPropertyAccess() Then
                         receiver = MakeRValue(receiver, diagnostics)
@@ -3195,7 +3195,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         End If
                     End If
 
-                    ReportDiagnosticsIfObsolete(diagnostics, fieldSymbol, node)
+                    ReportDiagnosticsIfObsoleteOrNotSupportedByRuntime(diagnostics, fieldSymbol, node)
 
                     ' const fields may need to determine the type because it's inferred
                     ' This is why using .Type was replaced by .GetInferredType to detect cycles.
@@ -3294,7 +3294,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         lookupResult.ReplaceSymbol(constructedType)
                     End If
 
-                    ReportDiagnosticsIfObsolete(diagnostics, typeSymbol, node)
+                    ReportDiagnosticsIfObsoleteOrNotSupportedByRuntime(diagnostics, typeSymbol, node)
 
                     If Not hasError Then
                         receiver = AdjustReceiverTypeOrValue(receiver, node, isShared:=True, diagnostics:=diagnostics, qualKind:=qualKind)
